@@ -1,0 +1,238 @@
+<job id="UpgradeSummary">
+   <script language="VBScript" src="ZTIUtility.vbs"/>
+   <script language="VBScript" src="ZTIDataAccess.vbs"/>
+   <script language="VBScript">
+
+' // ***************************************************************************
+' // 
+' // Copyright (c) Microsoft Corporation.  All rights reserved.
+' // 
+' // Microsoft Deployment Toolkit Solution Accelerator
+' //
+' // File:      UpgradeSummary.wsf
+' // 
+' // Version:   6.3.8298.1000
+' // 
+' // Purpose:   Logs Windows Upgrade Failure error
+' // 
+' // Usage:     cscript UpgradeSummary.wsf [/debug:true]
+' // 
+' // ***************************************************************************
+
+Option Explicit
+RunNewInstance
+
+'//----------------------------------------------------------------------------
+'//  Main Class
+'//----------------------------------------------------------------------------
+
+Class UpgradeSummary
+
+	'//----------------------------------------------------------------------------
+	'//  Class instance variable declarations
+	'//----------------------------------------------------------------------------
+	Dim PhaseArray
+	Dim OperationArray
+	
+	'//----------------------------------------------------------------------------
+	'//  Constructor to initialize needed global objects
+	'//----------------------------------------------------------------------------
+
+	Private Sub Class_Initialize
+		' initialize Phase and Operation array with static list of error codes
+		PhaseArray = Array("SP_EXECUTION_UNKNOWN", "SP_EXECUTION_DOWNLEVEL", "SP_EXECUTION_SAFE_OS", "SP_EXECUTION_FIRST_BOOT", "SP_EXECUTION_SECOND_BOOT")
+		
+		OperationArray = Array("SP_EXECUTION_OP_UNKNOWN", "SP_EXECUTION_OP_COPY_PAYLOAD", "SP_EXECUTION_OP_DOWNLOAD_UPDATES", _
+			"SP_EXECUTION_OP_INSTALL_UPDATES", "SP_EXECUTION_OP_INSTALL_RECOVERY_ENVIRONMENT", "SP_EXECUTION_OP_INSTALL_RECOVERY_IMAGE", _
+			"SP_EXECUTION_OP_REPLICATE_OC", "SP_EXECUTION_OP_INSTALL_DRIVERS", "SP_EXECUTION_OP_PREPARE_SAFE_OS", _
+			"SP_EXECUTION_OP_PREPARE_ROLLBACK", "SP_EXECUTION_OP_PREPARE_FIRST_BOOT", "SP_EXECUTION_OP_PREPARE_SECOND_BOOT", _
+			"SP_EXECUTION_OP_APPLY_IMAGE", "SP_EXECUTION_OP_MIGRATE_DATA", "SP_EXECUTION_OP_SET_PRODUCT_KEY", "SP_EXECUTION_OP_ADD_UNATTEND", _
+			"SP_EXECUTION_OP_ADD_DRIVER", "SP_EXECUTION_OP_ENABLE_FEATURE", "SP_EXECUTION_OP_DISABLE_FEATURE", "SP_EXECUTION_OP_REGISTER_ASYNC_PROCESS", _
+			"SP_EXECUTION_OP_REGISTER_SYNC_PROCESS", "SP_EXECUTION_OP_CREATE_FILE", "SP_EXECUTION_OP_CREATE_REGISTRY", "SP_EXECUTION_OP_BOOT", _
+			"SP_EXECUTION_OP_SYSPREP", "SP_EXECUTION_OP_OOBE", "SP_EXECUTION_OP_BEGIN_FIRST_BOOT", "SP_EXECUTION_OP_END_FIRST_BOOT", _
+			"SP_EXECUTION_OP_BEGIN_SECOND_BOOT", "SP_EXECUTION_OP_END_SECOND_BOOT", "SP_EXECUTION_OP_POST_OOBE")
+	End Sub
+
+
+	'//----------------------------------------------------------------------------
+	'//  Main routine
+	'//----------------------------------------------------------------------------
+
+	Function Main	
+			
+		Dim sUpgradeResult		
+		Dim bSkipFinalSummary
+		Dim bIsServerCoreOS
+		Dim sDisableDiskMgr
+		Dim iRollbackOperation
+		Dim iRollbackPhase
+		Dim sFile		
+		Dim sCmd
+		Dim iRetVal
+		
+		sCmd = "wscript.exe """ & oUtility.ScriptDir & "\ZTIGather.wsf"" /inifile:Bootstrap.ini"
+		iRetVal = RunAndLog(sCmd, true)		
+		sUpgradeResult = oEnvironment.Item("UpgradeResult")	
+		
+		oLogging.CreateEntry "sUpgradeResult = " & sUpgradeResult, LogTypeInfo
+		oLogging.CreateEntry "DisableTaskManager = " & oEnvironment.Item("DisableTaskMgr"), LogTypeInfo
+		oLogging.CreateEntry "oEnvironment.ScriptRoot = " & oEnvironment.Item("ScriptRoot"), LogTypeInfo
+		oLogging.CreateEntry "Arch = " & oEnvironment.Item("Architecture"), LogTypeInfo
+		oLogging.CreateEntry "oUtility.LocalRootPath = " & oUtility.LocalRootPath, LogTypeInfo
+		oLogging.CreateEntry "oUtility.ScriptDir = " & oUtility.LocalRootPath, LogTypeInfo
+		
+		If sUpgradeResult = "SUCCESS" then		
+			
+			oLogging.CreateEvent 41015, LogTypeInfo, "LTI deployment completed successfully", Array("0")
+			If ucase(oEnvironment.Item("_DoNotCleanLiteTouch")) = "TRUE" then
+				
+			End if
+			oEnvironment.Item("RetVal") = "0"
+			
+		ElseIf sUpgradeResult = "FAILURE" then
+
+			iRollbackOperation = oShell.RegRead("HKEY_LOCAL_MACHINE\System\Setup\Rollback\Operation")
+			iRollbackPhase = oShell.RegRead("HKEY_LOCAL_MACHINE\System\Setup\Rollback\Phase")
+			oLogging.CreateEvent 41014, LogTypeError, "Litetouch deployment failed, Operation = " & OperationArray(iRollbackOperation) & " Phase = " & PhaseArray(iRollbackPhase) , Array()
+			oLogging.CreateEntry "For more information, consult the task sequencer log ...\SMSTS.LOG.", LogTypeInfo
+			oLogging.CreateEntry " Upgrade: deleting temporary Upgrade Status registry values" , LogTypeInfo
+			oShell.RegDelete "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Windows\Win10UpgradeStatusCode"
+			oLogging.CreateEntry " Upgrade: deleted temporary Upgrade Status registry values sucessfully" , LogTypeInfo
+			oEnvironment.Item("RetVal") = "1"
+			
+		End if
+		
+		' Copy the logs		
+		oLogging.CopyLog
+		
+		' Save variables that we need		
+		bSkipFinalSummary = UCase(oEnvironment.Item("SkipFinalSummary")) = "YES"
+		bIsServerCoreOS = UCase(oEnvironment.Item("IsServerCoreOS")) = "TRUE"
+		sDisableDiskMgr = oEnvironment.Item("DisableTaskMgr")		
+
+		' Copy needed summary wizard files to %TEMP%\DeploymentScripts
+		If (bSkipFinalSummary and sUpgradeResult = "SUCCESS") or bIsServerCoreOS then
+			' Do nothing
+		Else
+			oUtility.VerifyPathExists oEnvironment.Substitute("%TEMP%\DeploymentScripts")
+			For each sFile in Array("Wizard.hta", "Wizard.css", "Wizard.ico", "ZTIUtility.vbs", "WizUtility.vbs", "ZTIConfigFile.vbs", "ZTIDiskUtility.vbs", "ZTIDataAccess.vbs", "header-image.png", "Computer.png", "Summary_Definition_ENU.xml", "Summary_Scripts.vbs", "plusicon.gif", "minusico.gif")				
+				oFSO.CopyFile oEnvironment.Item("ScriptRoot") & "\" & sFile, oEnvironment.Substitute("%TEMP%\DeploymentScripts") & "\" & sFile, true					
+			Next
+		End if
+		
+		' Clean up
+		Cleanup
+
+		' Display the final summary wizard (unless skipped)
+
+		If (not bSkipFinalSummary) then
+
+			If bIsServerCoreOS then				
+				If sUpgradeResult = "SUCCESS" then					
+					oShell.Popup "Deployment completed successfully.  Review deployment logs for full details.", 0, "Successful Deployment", 64						
+				Else					
+					oShell.Popup "Deployment did not complete successfully.  Review deployment logs for full details.", 0, "Failed Deployment", 48						
+				End if
+			Else
+				' Display the wizard								
+				sCmd = "MSHTA.exe """ & oEnvironment.Substitute("%TEMP%\DeploymentScripts") & "\Wizard.hta"" /definition:Summary_Definition_ENU.xml"
+				oShell.Run sCmd, 1, true
+
+				' Clean up the scripts				
+				oFileHandling.RemoveFolderEx oEnvironment.Substitute("%TEMP%\DeploymentScripts"), oLogging.Debug
+			End if
+			
+			' Clean up any files created since the initial full cleanup						
+			oFileHandling.RemoveFolderEx oUtility.LocalRootPath, oLogging.Debug
+			
+		End If
+			
+		' Enable TaskMgr if it was disabled during the task sequence		
+		if UCase(sDisableDiskMgr) = "YES" then
+			oShell.RegWrite "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System\DisableTaskMgr", 0, "REG_DWORD"
+		End if		
+		
+	End Function
+	
+	Sub Cleanup
+		Dim sCmd
+		Dim iRetVal
+		
+		CleanupStartItems
+		
+		' Unregister TSCORE.DLL (workaround)
+		If oFSO.FileExists(oUtility.LocalRootPath & "\Tools\" & oEnvironment.Item("Architecture") & "\TSCore.dll") then
+			oLogging.CreateEntry "Unregistering TSCore.dll.", LogTypeInfo
+			sCmd = "regsvr32 /u /s " & oUtility.LocalRootPath & "\Tools\" & oEnvironment.Item("Architecture") & "\TSCore.dll"
+			iRetVal = oShell.Run(sCmd, 0, false)
+			TestAndLog iRetVal, "Ran " & sCmd
+		Else
+			oLogging.CreateEntry "TSCore.dll not found, not unregistering.", LogTypeInfo
+		End if
+		
+		' Release our references to the task sequence environment
+		On Error Resume Next
+		oEnvironment.Release
+		TestAndLog Success, "Releasing Environment"
+		On Error Goto 0
+		
+		' Run LTICleanup to clean up the rest
+		sCmd = "wscript.exe """ & oUtility.ScriptDir & "\LTICleanup.wsf"""
+		oLogging.CreateEntry "About to run command: " & sCmd, LogTypeInfo
+		On Error Resume Next
+		iRetVal = oShell.Run(sCmd, 0, true)
+		
+		On Error Goto 0
+
+	End Sub
+	
+	Sub CleanupStartItems
+
+		' Clean up the run registry entry (if it exists)
+		On Error Resume Next
+		oShell.RegDelete "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce\LiteTouch"
+		On Error Goto 0
+		
+		' Clean up the shortcut (if it exists)
+		If oFSO.FileExists(oShell.SpecialFolders("AllUsersStartup") & "\LiteTouch.lnk") then		
+			oFSO.DeleteFile oShell.SpecialFolders("AllUsersStartup") & "\LiteTouch.lnk"			
+		End if
+		
+		oLogging.CreateEntry "CleanStartItems Complete", LogTypeInfo
+
+	End Sub
+	
+	
+	Function RunAndLog(sCmd, bDebuggable)
+
+		Dim iRetVal
+		Dim iShow
+
+
+		If oLogging.Debug and bDebuggable then
+		
+			sCmd = sCmd & " /debug:true"
+			iShow = 1
+			
+		Else
+		
+			iShow = 0
+			
+		End if
+
+
+		oLogging.CreateEntry "About to run command: " & sCmd, LogTypeInfo
+
+		On Error Resume Next
+		iRetVal = oShell.Run(sCmd, iShow, true)
+		RunAndLog = iRetVal
+		On Error Goto 0
+
+		oLogging.CreateEntry "Command completed, return code = " & iRetVal, LogTypeInfo
+
+	End Function
+
+ End Class
+
+ </script>
+</job>

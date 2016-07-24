@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+<sequence version="3.00" name="Standard Client Upgrade Task Sequence" description="A complete task sequence for deploying a client operating system">
+  <globalVarList>
+    <variable name="OSGUID" property="OSGUID">{5F76F2B6-DAF5-40A5-8F56-A486FE7E2307}</variable>
+	<variable name="IsOSUpgrade" property="IsOSUpgrade">1</variable>
+	<variable name="DynamicallyUpdateWinSetup" property="DynamicallyUpdateWinSetup">0</variable>	
+  </globalVarList>
+  <group name="Preparation" disable="false" continueOnError="false" description="Initialize the TS environment" expand="false">
+    <step type="BDD_Gather" name="Gather local only" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+      <defaultVarList>
+        <variable name="GatherLocalOnly" property="GatherLocalOnly">true</variable>
+        <variable name="RulesFile" property="RulesFile"></variable>
+      </defaultVarList>
+      <action>cscript.exe "%SCRIPTROOT%\ZTIGather.wsf"</action>
+    </step>
+	<step type="BDD_Validate" name="Validate" successCodeList="0 3010" description="" startIn="" disable="false" continueOnError="false">
+      <defaultVarList>
+        <variable name="ImageSize" property="ImageSize">5120</variable>
+        <variable name="ImageProcessorSpeed" property="ImageProcessorSpeed">1024</variable>
+        <variable name="ImageMemory" property="ImageMemory">2048</variable>
+        <variable name="VerifyOS" property="VerifyOS">CLIENT</variable>
+      </defaultVarList>
+      <action>cscript.exe "%SCRIPTROOT%\ZTIValidate.wsf"</action>
+    </step>
+  </group>
+  <group name="Upgrade the Operating System" disable="false" continueOnError="false" description="" expand="false">
+	<step name="Copy scripts" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+        <action>cscript.exe "%SCRIPTROOT%\LTICopyScripts.wsf"</action>
+    </step>
+    <step type="BDD_InjectDrivers" name="Inject Drivers" description="" disable="false" continueOnError="false" runIn="FullOS" successCodeList="0 3010">
+      <defaultVarList>
+        <variable name="DriverSelectionProfile" property="DriverSelectionProfile">All Drivers</variable>
+        <variable name="DriverInjectionMode" property="DriverInjectionMode">AUTO</variable>
+      </defaultVarList>
+      <action>cscript.exe "%SCRIPTROOT%\ZTIDrivers.wsf"</action>
+    </step>
+    <step type="BDD_UpgradeOS" name="Upgrade Windows" description="" disable="false" continueOnError="false" runIn="FullOS" successCodeList="0 3010">
+      <defaultVarList>
+        <variable name="OSGUID" property="OSGUID">{5F76F2B6-DAF5-40A5-8F56-A486FE7E2307}</variable>
+		<variable name="IsOSUpgrade" property="IsOSUpgrade">1</variable>
+		<variable name="DynamicallyUpdateWinSetup" property="DynamicallyUpdateWinSetup">0</variable>
+      </defaultVarList>
+      <action>cscript.exe "%SCRIPTROOT%\LTIApply.wsf"</action>
+    </step>
+	<group name="Capture Setup Failures" disable="false" continueOnError="true" description="" expand="false">	 
+	<condition>
+	 <expression type="SMS_TaskSequence_RegistryConditionExpression">
+	  <variable name="Data">FAILURE</variable>
+	  <variable name="KeyPath">HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Windows</variable>
+	  <variable name="Operator">equals</variable>
+	  <variable name="Type">REG_SZ</variable>
+	  <variable name="Value">Win10UpgradeStatusCode</variable>
+	 </expression>
+    </condition>
+	 <step name="Trigger Setup Failure" disable="false" continueOnError="true" successCodeList="0 3010" description="" startIn="">
+	  <action>cscript.exe "%SCRIPTROOT%\ZTISetupRollback.wsf"</action>
+	 </step>	 
+	</group>
+  </group>
+  <group name="Post-Processing" disable="false" continueOnError="false" description="" expand="false">
+	<condition>
+	 <expression type="SMS_TaskSequence_RegistryConditionExpression">
+	  <variable name="Data">SUCCESS</variable>
+	  <variable name="KeyPath">HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Windows</variable>
+	  <variable name="Operator">equals</variable>
+	  <variable name="Type">REG_SZ</variable>
+	  <variable name="Value">Win10UpgradeStatusCode</variable>
+	 </expression>
+    </condition>
+    <step type="BDD_Gather" name="Gather local only" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+      <defaultVarList>
+        <variable name="GatherLocalOnly" property="GatherLocalOnly">true</variable>
+        <variable name="RulesFile" property="RulesFile"></variable>
+      </defaultVarList>
+      <action>cscript.exe "%SCRIPTROOT%\ZTIGather.wsf"</action>
+    </step>
+	<step name="Tattoo" disable="false" continueOnError="true" successCodeList="0 3010" description="" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\ZTITatoo.wsf"</action>
+    </step>
+    <step name="Windows Update (Pre-Application Installation)" disable="true" continueOnError="true" successCodeList="0 3010" description="" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\ZTIWindowsUpdate.wsf"</action>
+    </step>
+    <step type="BDD_InstallApplication" name="Install Applications" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\ZTIApplications.wsf"</action>
+      <defaultVarList>
+        <variable name="ApplicationGUID" property="ApplicationGUID"></variable>
+        <variable name="ApplicationSuccessCodes" property="ApplicationSuccessCodes">0 3010</variable>
+      </defaultVarList>
+    </step>
+    <step name="Windows Update (Post-Application Installation)" disable="true" continueOnError="true" successCodeList="0 3010" description="" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\ZTIWindowsUpdate.wsf"</action>
+    </step>
+    <step type="SMS_TaskSequence_EnableBitLockerAction" name="Enable BitLocker" disable="true" continueOnError="true" successCodeList="0 3010" description="" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\ZTIBde.wsf"</action>
+      <condition>
+        <expression type="SMS_TaskSequence_VariableConditionExpression">
+          <variable name="Variable">BdeInstallSuppress</variable>
+          <variable name="Operator">notEquals</variable>
+          <variable name="Value">YES</variable>
+        </expression>
+      </condition>
+      <defaultVarList>
+        <variable name="OSDBitLockerTargetDrive" property="BdeTargetDriveLetter"></variable>
+        <variable name="OSDBitLockerMode" property="BdeInstall">TPM</variable>
+        <variable name="OSDBitLockerStartupKeyDrive" property="BdeKeyLocation"></variable>
+        <variable name="OSDBitLockerCreateRecoveryPassword" property="BdeRecoveryPassword">AD</variable>
+        <variable name="OSDBitLockerWaitForEncryption" property="WaitForEncryption">false</variable>
+      </defaultVarList>
+    </step>
+  </group>
+  <group name="Rollback" disable="false" continueOnError="false" description="Rollback for Upgrade failure" expand="false">
+	<condition>
+	 <expression type="SMS_TaskSequence_RegistryConditionExpression">
+	  <variable name="Data">FAILURE</variable>
+	  <variable name="KeyPath">HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Windows</variable>
+	  <variable name="Operator">equals</variable>
+	  <variable name="Type">REG_SZ</variable>
+	  <variable name="Value">Win10UpgradeStatusCode</variable>
+	 </expression>
+    </condition>
+    <step type="BDD_Gather" name="Gather local only" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+      <defaultVarList>
+        <variable name="GatherLocalOnly" property="GatherLocalOnly">true</variable>
+        <variable name="RulesFile" property="RulesFile"></variable>
+      </defaultVarList>
+      <action>cscript.exe "%SCRIPTROOT%\ZTIGather.wsf"</action>
+    </step>
+  </group>
+</sequence>

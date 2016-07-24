@@ -1,0 +1,43 @@
+<Definition>
+  <WindowsPE>
+	
+	<!-- Content -->
+	<Content>
+
+	  <Copy source="%INSTALLDIR%\SCCM\TSConfig.ini" dest="TSConfig.ini" />
+	  <Copy source="%INSTALLDIR%\SCCM\Deploy_SCCM_Definition_ENU.xml" dest="Deploy\Scripts\Deploy_SCCM_Definition_ENU.xml" />
+	  <Copy source="%INSTALLDIR%\SCCM\Deploy_SCCM_Scripts.vbs" dest="Deploy\Scripts\Deploy_SCCM_Scripts.vbs" />
+	  <Copy source="%INSTALLDIR%\SCCM\ZTIMediaHook.wsf" dest="Deploy\Scripts\ZTIMediaHook.wsf" />
+	  <Copy source="%INSTALLDIR%\SCCM\SCCM_Bootstrap.ini" dest="Deploy\Scripts\SCCM_Bootstrap.ini" />
+          <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\ZTIUtility.vbs" dest="Deploy\Scripts\ZTIUtility.vbs" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\ZTIBCDUtility.vbs" dest="Deploy\Scripts\ZTIBCDUtility.vbs" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\ZTIDiskUtility.vbs" dest="Deploy\Scripts\ZTIDiskUtility.vbs" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\ZTIDataAccess.vbs" dest="Deploy\Scripts\ZTIDataAccess.vbs" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\ZTIConfigFile.vbs" dest="Deploy\Scripts\ZTIConfigFile.vbs" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\ZTIGather.wsf" dest="Deploy\Scripts\ZTIGather.wsf" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\ZTIGather.xml" dest="Deploy\Scripts\ZTIGather.xml" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\Wizard.hta" dest="Deploy\Scripts\Wizard.hta" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\WizUtility.vbs" dest="Deploy\Scripts\WizUtility.vbs" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\Wizard.css" dest="Deploy\Scripts\Wizard.css" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\Wizard.ico" dest="Deploy\Scripts\Wizard.ico" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\BackButton.jpg" dest="Deploy\Scripts\BackButton.jpg" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\plusicon.gif" dest="Deploy\Scripts\plusicon.gif" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\minusico.gif" dest="Deploy\Scripts\minusico.gif" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\SelectItem.jpg" dest="Deploy\Scripts\SelectItem.jpg" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\WelcomeBanner.jpg" dest="Deploy\Scripts\WelcomeBanner.jpg" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\btnout.png" dest="Deploy\Scripts\btnout.png" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\btnover.png" dest="Deploy\Scripts\btnover.png" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\btnsel.png" dest="Deploy\Scripts\btnsel.png" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\BackButton.png" dest="Deploy\Scripts\BackButton.png" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\FolderIcon.png" dest="Deploy\Scripts\FolderIcon.png" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\ItemIcon1.png" dest="Deploy\Scripts\ItemIcon1.png" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\MinusIcon1.png" dest="Deploy\Scripts\MinusIcon1.png" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\PlusIcon1.png" dest="Deploy\Scripts\PlusIcon1.png" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\SelectItem.png" dest="Deploy\Scripts\SelectItem.png" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\Computer.png" dest="Deploy\Scripts\Computer.png" />
+	  <Copy source="%INSTALLDIR%\Templates\Distribution\Scripts\header-image.png" dest="Deploy\Scripts\header-image.png" />
+
+	</Content>
+
+  </WindowsPE>
+</Definition>

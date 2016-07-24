@@ -1,0 +1,101 @@
+<groups>
+    <group guid="{00000000-0000-0000-0000-000000000000}" enable="True">
+        <Name>default</Name>
+        <Comments>default folder (root)</Comments>
+    </group>
+    <group guid="{FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF}" enable="True">
+        <Name>hidden</Name>
+        <Comments>This folder contains shared source items that have not been made explicitly visible in this deployment share.</Comments>
+    </group>
+    <group guid="{5c5388c1-4909-4349-8abd-244085061c17}" enable="True">
+        <Name>CONFIG - Server</Name>
+        <Comments></Comments>
+        <CreatedTime>2/2/2015 2:03:42 AM</CreatedTime>
+        <CreatedBy>PICKETTL\Keith</CreatedBy>
+        <LastModifiedTime>2/2/2015 2:08:00 AM</LastModifiedTime>
+        <LastModifiedBy>PICKETTL\Keith</LastModifiedBy>
+        <Member>{436a199f-4743-4a67-bd65-3c794890e24e}</Member>
+        <Member>{7bf0ec34-96cf-41d5-ae07-31c8a4960ba5}</Member>
+        <Member>{f3898a82-541d-4d51-986f-146c91d2b413}</Member>
+        <Member>{de6e776f-bd6e-4c59-a0ab-353a9ea27397}</Member>
+        <Member>{6fb712d3-fd88-4c5a-bcc2-cae3815586ea}</Member>
+        <Member>{96f48b5b-525c-452e-95b8-e65593bdca7c}</Member>
+        <Member>{dbda8d8a-4b78-4a09-a9b6-9134cf3592f1}</Member>
+        <Member>{6093b4b1-5680-4d72-ba6f-8b4e2d4218e9}</Member>
+        <Member>{83e12a08-70b6-4393-9df3-1d89e4959da1}</Member>
+        <Member>{a1499f88-5a4f-4055-bf93-012b57f38d14}</Member>
+        <Member>{fbdc4181-9740-42cb-bc22-0c78a5f55476}</Member>
+    </group>
+    <group guid="{95f91806-9395-4495-a410-c936092b7f19}" enable="True">
+        <Name>INSTALL - Applications</Name>
+        <Comments></Comments>
+        <CreatedTime>2/2/2015 2:03:55 AM</CreatedTime>
+        <CreatedBy>PICKETTL\Keith</CreatedBy>
+        <LastModifiedTime>2/3/2015 6:11:07 AM</LastModifiedTime>
+        <LastModifiedBy>PICKETTL\Keith</LastModifiedBy>
+        <Member>{9d889497-f36e-4887-9dc9-8a7333c2018b}</Member>
+        <Member>{e3bf3251-2bd7-420b-b647-27d4c989fd6b}</Member>
+        <Member>{d4a23bc4-b67b-4d37-9473-7d230774d5dc}</Member>
+        <Member>{3b53d38f-642d-4013-ae8d-5067c974724c}</Member>
+        <Member>{36a5caee-ce1c-46fe-817b-67598e94b421}</Member>
+        <Member>{eb40ef78-92c9-4978-b44f-9b2eeda05f50}</Member>
+        <Member>{8d157aaf-9b91-42a6-bd85-dcbb3550374a}</Member>
+        <Member>{fbf1a984-09fb-438c-b361-be15954a95c2}</Member>
+        <Member>{9a33aba6-97bb-4764-9359-4adb2a44a73f}</Member>
+        <Member>{0bc5edc0-b5d0-4994-8c23-47c8f363679a}</Member>
+        <Member>{2ade9e7b-bd91-4827-a798-3aa62c9a1023}</Member>
+        <Member>{75858b90-3ace-4423-a1c4-cab807d3d167}</Member>
+        <Member>{ca45c10e-bee2-41e4-881a-2ee9cc3a83ac}</Member>
+        <Member>{ac795924-f8e8-4673-9c7a-e6dc7091469f}</Member>
+    </group>
+    <group guid="{8e22013a-84a5-4e7e-82cd-136c0150270c}" enable="True">
+        <Name>CONFIG - Client</Name>
+        <Comments></Comments>
+        <CreatedTime>2/2/2015 2:04:30 AM</CreatedTime>
+        <CreatedBy>PICKETTL\Keith</CreatedBy>
+        <LastModifiedTime>2/2/2015 2:07:28 AM</LastModifiedTime>
+        <LastModifiedBy>PICKETTL\Keith</LastModifiedBy>
+        <Member>{d3efa555-d982-4add-8243-1fd52288dcf9}</Member>
+        <Member>{60067544-0066-4bbc-9110-01567e71af9a}</Member>
+        <Member>{de6e776f-bd6e-4c59-a0ab-353a9ea27397}</Member>
+        <Member>{dbda8d8a-4b78-4a09-a9b6-9134cf3592f1}</Member>
+        <Member>{6093b4b1-5680-4d72-ba6f-8b4e2d4218e9}</Member>
+        <Member>{fbdc4181-9740-42cb-bc22-0c78a5f55476}</Member>
+    </group>
+    <group guid="{5fa69890-0108-4bc7-80e3-c4b8c2c6cee1}" enable="True">
+        <Name>BUNDLE</Name>
+        <Comments></Comments>
+        <CreatedTime>2/2/2015 2:05:43 AM</CreatedTime>
+        <CreatedBy>PICKETTL\Keith</CreatedBy>
+        <LastModifiedTime>2/2/2015 2:06:18 AM</LastModifiedTime>
+        <LastModifiedBy>PICKETTL\Keith</LastModifiedBy>
+        <Member>{631f0a5a-ed76-47b8-8ed4-74aeb43f4b49}</Member>
+        <Member>{524d3d3d-bc51-4624-b014-4777aa75a99b}</Member>
+        <Member>{9ccf1ff3-4b04-4dce-859a-a92ab2bff6cb}</Member>
+        <Member>{4c449caf-015b-4f01-aac1-20fb16f9aab6}</Member>
+    </group>
+    <group guid="{96816bfb-6fd1-4d31-afc8-7b0a50ae6d3c}" enable="True">
+        <Name>INSTALL - Create</Name>
+        <Comments></Comments>
+        <CreatedTime>2/2/2015 4:52:44 AM</CreatedTime>
+        <CreatedBy>PICKETTL\Keith</CreatedBy>
+        <LastModifiedTime>2/2/2015 5:03:23 AM</LastModifiedTime>
+        <LastModifiedBy>PICKETTL\Keith</LastModifiedBy>
+        <Member>{6fd7a100-6778-4be6-b10f-a925e703303f}</Member>
+        <Member>{4e9de5c1-8ea2-4e4c-a7ab-3dfa9b4bfa85}</Member>
+        <Member>{cbbbdc0a-cd50-450a-92f0-081756fee42d}</Member>
+        <Member>{7f9a5c6a-d343-4138-9a02-5140a99913c6}</Member>
+        <Member>{a5b9ed76-a0b9-4229-8408-4c1ad6508ac2}</Member>
+    </group>
+    <group guid="{99294471-602b-46d3-9ce5-b2108aaef0dc}" enable="True">
+        <Name>INSTALL - Applications\Subscription</Name>
+        <Comments></Comments>
+        <CreatedTime>2/3/2015 6:01:25 AM</CreatedTime>
+        <CreatedBy>PICKETTL\Keith</CreatedBy>
+        <LastModifiedTime>2/3/2015 6:12:08 AM</LastModifiedTime>
+        <LastModifiedBy>PICKETTL\Keith</LastModifiedBy>
+        <Member>{7d16b69d-7de7-46cd-9e7e-7defba1a1207}</Member>
+        <Member>{e25e530f-1d30-4806-8b6e-0d27f42444d3}</Member>
+        <Member>{5ff57e26-b31c-4cb6-8f27-5f028bd1ae5e}</Member>
+    </group>
+</groups>

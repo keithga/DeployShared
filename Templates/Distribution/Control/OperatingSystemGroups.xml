@@ -1,0 +1,27 @@
+<groups>
+  <group guid="{00000000-0000-0000-0000-000000000000}" enable="True">
+    <Name>default</Name>
+    <Comments>default folder (root)</Comments>
+  </group>
+  <group guid="{085ed08f-8fdb-4a8b-a7e1-54361861cc35}" enable="True">
+    <Name>Create</Name>
+    <CreatedTime>12/7/2015 2:57:03 AM</CreatedTime>
+    <CreatedBy>PICKETTZ\keith</CreatedBy>
+    <LastModifiedTime>12/7/2015 2:57:03 AM</LastModifiedTime>
+    <LastModifiedBy>PICKETTZ\keith</LastModifiedBy>
+  </group>
+  <group guid="{a2a0fff4-7fa4-448b-9c6c-0b1b5efe0225}" enable="True">
+    <Name>Upgrade</Name>
+    <CreatedTime>12/7/2015 2:59:43 AM</CreatedTime>
+    <CreatedBy>PICKETTZ\keith</CreatedBy>
+    <LastModifiedTime>12/7/2015 2:59:43 AM</LastModifiedTime>
+    <LastModifiedBy>PICKETTZ\keith</LastModifiedBy>
+  </group>
+  <group guid="{7040b415-f763-4d59-966c-7efd20ffbf05}" enable="True">
+    <Name>Deploy</Name>
+    <CreatedTime>12/7/2015 3:00:15 AM</CreatedTime>
+    <CreatedBy>PICKETTZ\keith</CreatedBy>
+    <LastModifiedTime>12/7/2015 3:00:15 AM</LastModifiedTime>
+    <LastModifiedBy>PICKETTZ\keith</LastModifiedBy>
+  </group>
+</groups>

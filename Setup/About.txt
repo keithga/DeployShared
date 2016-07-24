@@ -1,0 +1,9 @@
+
+Note: This is the HIGHLY UNSUPPORTED collection of my personal fixes, and additions to MDT 2013 Update 1 for Windows 10. You may use at your own risk.
+If you wish to contribute, please let me know. KeithGa@DeploymentLive.com
+
+https://github.com/keithga/DeployShared
+
+Installation Instructions:
+
+* TBD

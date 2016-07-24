@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sequence version="3.00" name="Standard Client Replace Task Sequence" description="A task sequence to capture the state of a computer then clean it for replacement">
+  <group name="Initialization" disable="false" continueOnError="false" description="Initialize the TS environment" expand="true">
+    <step type="BDD_Gather" name="Gather local only" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+      <defaultVarList>
+        <variable name="GatherLocalOnly" property="GatherLocalOnly">true</variable>
+        <variable name="RulesFile" property="RulesFile"></variable>
+      </defaultVarList>
+      <action>cscript.exe "%SCRIPTROOT%\ZTIGather.wsf"</action>
+    </step>
+  </group>
+  <group name="State Capture" description="" disable="false" continueOnError="false" expand="true">
+    <condition></condition>
+    <step name="Capture User State" successCodeList="0 3010" description="" startIn="" disable="false" continueOnError="false">
+      <action>cscript.exe "%SCRIPTROOT%\ZTIUserState.wsf" /capture</action>
+    </step>
+    <step name="Capture Groups" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+      <condition>
+        <expression type="SMS_TaskSequence_VariableConditionExpression">
+          <variable name="Variable">OSVersion</variable>
+          <variable name="Operator">notEquals</variable>
+          <variable name="Value">WinPE</variable>
+        </expression>
+      </condition>
+      <action>cscript.exe "%SCRIPTROOT%\ZTIGroups.wsf" /capture</action>
+    </step>
+    <step name="Capture Network Settings" description="" runIn="WinPEandFullOS" successCodeList="0 3010" disable="false" continueOnError="false">
+      <action>cscript.exe "%ScriptRoot%\ZTINicConfig.wsf"</action>
+    </step>
+    <group expand="true" name="Backup Computer" description="" disable="false" continueOnError="false">
+      <action />
+      <step type="SMS_TaskSequence_RunCommandLineAction" name="Disable BDE Protectors" description="" disable="false" continueOnError="false" startIn="" successCodeList="0 3010" runIn="WinPEandFullOS">
+        <action>cscript.exe "%SCRIPTROOT%\ZTIDisableBDEProtectors.wsf"</action>
+        <condition>
+          <expression type="SMS_TaskSequence_VariableConditionExpression">
+            <variable name="Variable">OSCurrentVersion</variable>
+            <variable name="Operator">greaterEqual</variable>
+            <variable name="Value">6</variable>
+          </expression>
+        </condition>
+      </step>
+      <step name="Apply Windows PE" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+        <condition>
+          <expression type="SMS_TaskSequence_VariableConditionExpression">
+            <variable name="Variable">OSVersion</variable>
+            <variable name="Operator">notEquals</variable>
+            <variable name="Value">WinPE</variable>
+          </expression>
+        </condition>
+        <action>cscript.exe "%SCRIPTROOT%\LTIApply.wsf" /PE</action>
+      </step>
+      <step type="SMS_TaskSequence_RunCommandLineAction" name="Next Phase" description="" disable="false" continueOnError="false" successCodeList="0 3010" runIn="WinPEandFullOS" startIn="">
+        <action>cscript.exe "%SCRIPTROOT%\ZTINextPhase.wsf"</action>
+      </step>
+      <step type="SMS_TaskSequence_RebootAction" name="Restart computer" description="" disable="false" continueOnError="false" runIn="WinPEandFullOS" successCodeList="0 3010">
+        <condition>
+          <expression type="SMS_TaskSequence_VariableConditionExpression">
+            <variable name="Variable">OSVersion</variable>
+            <variable name="Operator">notEquals</variable>
+            <variable name="Value">WinPE</variable>
+          </expression>
+        </condition>
+        <defaultVarList>
+          <variable name="Message" property="Message"></variable>
+          <variable name="MessageTimeout" property="MessageTimeout">60</variable>
+          <variable name="Target" property="Target"></variable>
+        </defaultVarList>
+        <action>smsboot.exe /target:WinPE</action>
+      </step>
+      <group expand="true" name="PreInstall" description="" disable="false" continueOnError="false">
+        <action />
+        <step type="SMS_TaskSequence_RunCommandLineAction" name="Next Phase" description="" disable="false" continueOnError="false" successCodeList="0 3010" runIn="WinPEandFullOS" startIn="">
+          <action>cscript.exe "%SCRIPTROOT%\ZTINextPhase.wsf"</action>
+        </step>
+      </group>
+      <group expand="true" name="Install" description="" disable="false" continueOnError="false">
+        <action />
+        <step type="SMS_TaskSequence_RunCommandLineAction" name="Next Phase" description="" disable="false" continueOnError="false" successCodeList="0 3010" runIn="WinPEandFullOS" startIn="">
+          <action>cscript.exe "%SCRIPTROOT%\ZTINextPhase.wsf"</action>
+        </step>
+      </group>
+      <group name="PostInstall" disable="false" continueOnError="false" description="" expand="true">
+        <condition></condition>
+        <step type="BDD_Gather" name="Gather local only" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+          <defaultVarList>
+            <variable name="GatherLocalOnly" property="GatherLocalOnly">true</variable>
+            <variable name="RulesFile" property="RulesFile"></variable>
+          </defaultVarList>
+          <action>cscript.exe "%SCRIPTROOT%\ZTIGather.wsf"</action>
+        </step>
+        <step name="Backup" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+          <action>cscript.exe "%SCRIPTROOT%\ZTIBackup.wsf"</action>
+          <condition>
+            <expression type="SMS_TaskSequence_VariableConditionExpression">
+              <variable name="Variable">ComputerBackupLocation</variable>
+              <variable name="Operator">notEquals</variable>
+              <variable name="Value">NONE</variable>
+            </expression>
+          </condition>
+        </step>
+        <action />
+        <step type="SMS_TaskSequence_RunCommandLineAction" name="Wipe Disk" description="This will only run if WipeDisk=True in the customsettings.ini" disable="false" continueOnError="false" successCodeList="0 3010" runIn="WinPEandFullOS" startIn="">
+          <action>cscript "%scriptroot%\ztiwipedisk.wsf"</action>
+          <condition>
+            <expression type="SMS_TaskSequence_VariableConditionExpression">
+              <variable name="Variable">WipeDisk</variable>
+              <variable name="Operator">equals</variable>
+              <variable name="Value">TRUE</variable>
+            </expression>
+          </condition>
+        </step>
+      </group>
+      <condition>
+        <operator type="or">
+          <expression type="SMS_TaskSequence_VariableConditionExpression">
+            <variable name="Variable">WipeDisk</variable>
+            <variable name="Operator">equals</variable>
+            <variable name="Value">TRUE</variable>
+          </expression>
+          <expression type="SMS_TaskSequence_VariableConditionExpression">
+            <variable name="Variable">ComputerBackupLocation</variable>
+            <variable name="Operator">notEquals</variable>
+            <variable name="Value">NONE</variable>
+          </expression>
+        </operator>
+      </condition>
+    </group>
+  </group>
+</sequence>

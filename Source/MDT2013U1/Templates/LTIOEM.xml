@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<sequence version="3.00" name="Litetouch OEM Task Sequence" description="Litetouch OEM Task Sequence">
+	<globalVarList>
+		<variable name="DeploymentType" property="DeploymentType">NEWCOMPUTER</variable>
+	</globalVarList>
+	<step type="SMS_TaskSequence_SetVariableAction" name="Enable OEM Disk Configuration" description="" disable="false" continueOnError="false" successCodeList="0 3010">
+		<defaultVarList>
+			<variable name="VariableName" property="VariableName">DeploymentType</variable>
+			<variable name="VariableValue" property="VariableValue">NEWCOMPUTER</variable>
+		</defaultVarList>
+		<action>cscript.exe "%SCRIPTROOT%\ZTISetVariable.wsf"</action>
+	</step>
+	<step type="SMS_TaskSequence_RunCommandLineAction" name="Force Diskpart Action " description="" disable="false" continueOnError="true" startIn="" successCodeList="0 1" runIn="WinPEandFullOS">
+		<action>cmd.exe /c if exist c:\oem.wsf del /q c:\oem.wsf</action>
+	</step>
+	<step type="SMS_TaskSequence_PartitionDiskAction" name="Format and Partition Disk" description="" disable="false" continueOnError="false" runIn="WinPEandFullOS" successCodeList="0 3010">
+		<defaultVarList>
+			<variable name="OSDDiskIndex" property="DiskIndex">0</variable>
+			<variable name="DONotCreateExtraPartition" property="DONotCreateExtraPartition"></variable>
+			<variable name="OSDPartitions0Type" property="Partitions0Type">Primary</variable>
+			<variable name="OSDPartitions0FileSystem" property="Partitions0FileSystem">NTFS</variable>
+			<variable name="OSDPartitions0Bootable" property="Partitions0Bootable">True</variable>
+			<variable name="OSDPartitions0QuickFormat" property="Partitions0QuickFormat">True</variable>
+			<variable name="OSDPartitions0VolumeName" property="Partitions0VolumeName">OSDisk</variable>
+			<variable name="OSDPartitions0Size" property="Partitions0Size">100</variable>
+			<variable name="OSDPartitions0SizeUnits" property="Partitions0SizeUnits">%</variable>
+			<variable name="OSDPartitions0VolumeLetterVariable" property="Partitions0VolumeLetterVariable"></variable>
+			<variable name="OSDPartitions" property="Partitions">1</variable>
+			<variable name="OSDPartitionStyle" property="PartitionStyle">MBR</variable>
+		</defaultVarList>
+		<action>cscript.exe "%SCRIPTROOT%\ZTIDiskpart.wsf"</action>
+	</step>
+	<step type="SMS_TaskSequence_SetVariableAction" name="Restore Custom Task Sequence Type" description="" disable="true" continueOnError="false" successCodeList="0 3010">
+		<defaultVarList>
+			<variable name="VariableName" property="VariableName">DeploymentType</variable>
+			<variable name="VariableValue" property="VariableValue">CUSTOM</variable>
+		</defaultVarList>
+		<action>cscript.exe "%SCRIPTROOT%\ZTISetVariable.wsf"</action>
+	</step>
+	<step type="SMS_TaskSequence_RunCommandLineAction" name="Copy Media CD to Local Hard Disk for OEM pre-installation" description="" disable="false" continueOnError="false" startIn="" successCodeList="0 3010" runIn="WinPEandFullOS">
+		<action>cscript.exe //nologo "%SCRIPTROOT%\LTIOEM.wsf" </action>
+	</step>
+	<step type="SMS_TaskSequence_RunCommandLineAction" name="Stage Media" description="" disable="false" continueOnError="false" startIn="" successCodeList="0 3010" runIn="WinPEandFullOS">
+		<action>cscript.exe "%ScriptRoot%\LTIApply.wsf" /PE /OEM</action>
+	</step>
+</sequence>

@@ -1,0 +1,383 @@
+<job id="ZTIVDIOptimizer">
+	<script language="VBScript" src="..\ZTIUtility.vbs"/>
+
+	<resource id="DisableServices">
+ALG	Application Layer Gateway Service
+BITS	Background Intelligent Transfer Service
+BDESVC	Bitlocker Drive Encryption Service
+wbengine	Block Level Backup Engine Service
+bthserv	Bluetooth Support Service
+PeerDistSvc	BranchCache Service
+Browser	Computer Browser Service
+DeviceAssociationService	Device Association Service
+DsmSvc	Device Setup Manager Service
+DPS	Diagnostic Policy Services
+WdiServiceHost	Diagnostic Policy Services
+WdiSystemHost	Diagnostic Policy Services
+TrkWks	Distributed Link Tracking Client Service
+EFS	Encrypting File System Service
+WPCSvc	Family Safety Service
+Fax	Fax Service
+fdPHost	Function Discovery Resource Publication Service
+HomeGroupListener	HomeGroup Listener Service
+HomeGroupProvider	HomeGroup Provider Service
+msiscsi	Microsoft iSCSI Initiator Service
+swprv	Microsoft Software Shadow Copy Provider Service
+defragsvc	Optimize Drives Service 
+SstpSvc	Secure Socket Tunneling Protocol Service
+SensrSvc	Sensor Monitoring Service
+ShellHWDetection	Shell Hardware Detection Service
+SNMPTRAP	SNMP Trap Service
+SSDPSRV	SSDP Discovery Service
+TapiSrv	Telephony Service
+Themes	Themes Service
+upnphost	UPnP Device Host Service
+VSS	Volume Shadow Copy Service
+SDRSVC	Windows Backup Service
+WcsPlugInService	Windows Color System Service
+wcncsvc	Windows Connect Now - Config Registrar Service
+WerSvc	Windows Error Reporting Service
+WMPNetworkSvc	Windows Media Player Network Sharing Service
+WSearch	Windows Search Service
+Wlansvc	WLAN AutoConfig Service
+WwanSvc	WWAN AutoConfig Service
+</resource>
+
+	<script language="VBScript">
+
+' // ***************************************************************************
+' // 
+' // Copyright (c) Microsoft Corp.  All rights reserved.
+' // 
+' // Microsoft Deployment Toolkit Solution Accelerator
+' //
+' // File:      VDIOptimizer.wsf
+' // 
+' // Version:   <VERSION>
+' // 
+' // Usage:     cscript.exe [//nologo] VDIOptimizer.wsf [/debug:true]
+' // 
+' // Original generated with VDIOptimizer - http://www.autoitscript.com/tools 
+' // (c)2010 Jonathan Bennett 
+' // 
+' // Version:          1.3-Win8 
+' // Last Modified:    9th April 2013 
+' // Last Modified by: Carl Luberti (MSFT) 
+' // Contributions by: Jeff Stokes (MSFT) 
+' // Cleaned up by Keith Garner
+' // 
+' // ***************************************************************************
+
+Option Explicit
+RunNewInstance
+
+CONST HKLM = &H80000002
+
+
+'//----------------------------------------------------------------------------
+'//  Main Class
+'//----------------------------------------------------------------------------
+
+Class ZTIVDIOptimizer
+
+	'//----------------------------------------------------------------------------
+	'//  Main routine
+	'//----------------------------------------------------------------------------
+
+	Function Main
+
+		oLogging.CreateEntry "VDI Optimizer" , LogTypeInfo
+
+		dim objService, Service
+
+		for each Service in split(getResource("DisableServices"),vbCrLf)
+			If trim(Service) <> "" then
+
+				oLogging.CreateEntry "Find Service: " & Service, LogTypeInfo
+				For Each objService in objWMI.ExecQuery("Select * from Win32_Service where Name = '" & split(Service,vbTab)(0) & "'")
+					If objService.State = "Running" Then
+						oLogging.CreateEntry "Stop Service: " & Service, LogTypeInfo
+						objService.StopService()
+						Wscript.Sleep 5000
+					End If
+					oLogging.CreateEntry "Disable Service: " & Service, LogTypeInfo
+					errReturnCode = objService.ChangeStartMode("Disabled")
+				Next
+
+			End if
+		next
+
+		' // ================== 
+		' // Configure Services 
+		' // ==================
+
+		' Set Network List Service to Auto
+		oUtility.RunWithHeartbeat "sc config netprofm start= auto"
+
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\defrag\ScheduledDefrag"" /disable" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Dfrg\BootOptimizeFunction\Enable", "N", "REG_SZ"
+
+		oUtility.RunWithHeartbeat "sc stop SSDPSRV"
+
+
+		' Break out Windows Management Instrumentation Service 
+		oUtility.RunWithHeartbeat "winmgmt /standalonehost"
+		oUtility.RunWithHeartbeat "sc config winmgmt group= COM Infrastructure"
+
+		' // ================ 
+		' // MACHINE SETTINGS 
+		' // ================
+
+		' Disable Hard disk timeouts 
+		oUtility.RunWithHeartbeat "POWERCFG /SETACVALUEINDEX 381b4222-f694-41f0-9685-ff5bb260df2e 0012ee47-9041-4b5d-9b77-535fba8b1442 6738e2c4-e8a5-4a42-b16a-e040e769756e 0" 
+		oUtility.RunWithHeartbeat "POWERCFG /SETDCVALUEINDEX 381b4222-f694-41f0-9685-ff5bb260df2e 0012ee47-9041-4b5d-9b77-535fba8b1442 6738e2c4-e8a5-4a42-b16a-e040e769756e 0"
+
+
+		' Disable TCP/IP / Large Send Offload 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\DisableTaskOffload", &H00000001, "REG_DWORD" 
+
+
+		' Disable hibernate 
+		oUtility.RunWithHeartbeat "powercfg -h off"
+
+
+		' Disable System Restore 
+		Set objWMIService = GetObject("winmgmts:\\.\root\default") 
+		Set objItem = objWMIService.Get("SystemRestore") 
+		objItem.Disable("") 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\SystemRestore\SR"" /disable" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\SystemRestore\DisableSR", &H00000001, "REG_DWORD"
+
+
+		' Disable NTFS Last Access Timestamps 
+		oUtility.RunWithHeartbeat "FSUTIL behavior set disablelastaccess 1"
+
+
+		' Disable Other Scheduled Tasks 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Application Experience\AitAgent"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Application Experience\ProgramDataUpdater"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Application Experience\StartupAppTask"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Autochk\Proxy"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Bluetooth\UninstallDeviceTask"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Customer Experience Improvement Program\BthSQM"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Customer Experience Improvement Program\Consolidator"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Customer Experience Improvement Program\KernelCeipTask"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Customer Experience Improvement Program\Uploader"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Customer Experience Improvement Program\UsbCeip"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Diagnosis\Scheduled"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticResolver"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Maintenance\WinSAT"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\MobilePC\HotStart"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Power Efficiency Diagnostic\AnalyzeSystem"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\RAC\RacTask"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Ras\MobilityManager"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Registry\RegIdleBackup"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Shell\FamilySafetyMonitor"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Shell\FamilySafetyRefresh"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\SideShow\AutoWake"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\SideShow\GadgetManager"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\SideShow\SessionAgent"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\SideShow\SystemDataProviders"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\UPnP\UPnPHostConfig"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\WDI\ResolutionHost"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Windows Filtering Platform\BfeOnServiceStartTypeChange"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\Windows Media Sharing\UpdateLibrary"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\WindowsBackup\ConfigNotification"" /disable"
+
+			' Disable Windows Defender Service 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\windows Defender\Windows Defender Cache Maintenance"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\windows Defender\Windows Defender Cleanup"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\windows Defender\Windows Defender Scheduled Scan"" /disable" 
+		oUtility.RunWithHeartbeat "schtasks /change /tn ""microsoft\windows\windows Defender\Windows Defender Verification"" /disable"
+
+
+		' Configure Event Logs to 1028KB (Minimum size under Vista/7) and set retention to "overwrite" 
+		Set oEventLogs = GetObject("winmgmts:{impersonationLevel=impersonate,(Security)}!//./root/cimv2").InstancesOf("Win32_NTEventLogFile") 
+		For Each e in oEventLogs 
+			e.MaxFileSize = 1052672 
+			e.OverWritePolicy = "WhenNeeded" 
+			e.OverWriteOutdated = 0 
+			e.Put_ 
+			e.ClearEventLog() 
+		Next
+
+		' Disable bootlog and boot animation 
+		oUtility.RunWithHeartbeat "bcdedit /set {default} bootlog no" 
+		oUtility.RunWithHeartbeat "bcdedit /set {default} quietboot yes"
+
+		' Disable New Network dialog 
+		oUtility.RunWithHeartbeat "reg add HKLM\SYSTEM\CurrentControlSet\Control\Network\NewNetworkWindowOff"
+
+
+		' Disable Machine Account Password Changes 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters\DisablePasswordChange", &H00000001, "REG_DWORD" 
+
+
+		' Disable memory dumps 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CrashControl\CrashDumpEnabled", &H00000000, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CrashControl\LogEvent", &H00000000, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CrashControl\SendAlert", &H00000000, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CrashControl\AutoReboot", &H00000001, "REG_DWORD"
+
+
+		' Disable default system screensaver 
+		oShell.RegWrite "HKEY_USERS\.DEFAULT\Control Panel\Desktop\ScreenSaveActive", 0, "REG_DWORD"
+
+
+		' Increase service startup timeouts 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ServicesPipeTimeout", &H0002bf20, "REG_DWORD"
+
+
+		' Increase Disk I/O Timeout to 200 seconds. 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Disk\TimeOutValue", &H000000C8, "REG_DWORD"
+
+
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\eventlog\Application\Retention", 0, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\eventlog\Security\Retention", 0, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\eventlog\System\Retention", 0, "REG_DWORD"
+
+		' Set PopUp Error Mode to "Neither" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Windows\ErrorMode", 2, "REG_DWORD"
+
+
+		' Disable UAC secure desktop prompt 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\PromptOnSecureDesktop", &H00000000, "REG_DWORD"
+
+
+
+		' Disable AutoUpdate of drivers from WU 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\DriverSearching\searchorderConfig", 0, "REG_DWORD"
+
+
+		' Turn off Windows SideShow and install NetFX3 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\Sideshow\Disabled", 1, "REG_DWORD" 
+
+		' Disable IE First Run Wizard and RSS Feeds 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Internet Explorer\Main\DisableFirstRunCustomize", 1, "REG_DWORD"
+
+
+		' Disable the ability to clear the paging file during shutdown 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SessionManager\Memory Management\ClearPageFileAtShutdown", 0, "REG_DWORD"
+
+
+		' Perform a disk cleanup 
+		' Automate by creating the reg checks corresponding to "cleanmgr /sageset:100" so we can use "sagerun:100" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Active Setup Temp Folders\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Downloaded Program Files\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Internet Cache Files\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Memory Dump Files\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Offline Pages Files\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Old ChkDsk Files\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Previous Installations\StateFlags0100", &H00000000, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Recycle Bin\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Setup Log Files\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\System error memory dump files\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\System error minidump files\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Temporary Files\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Temporary Setup Files\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Thumbnail Cache\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Upgrade Discarded Files\StateFlags0100", &H00000000, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Windows Error Reporting Archive Files\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Windows Error Reporting Queue Files\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Windows Error Reporting System Archive Files\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Windows Error Reporting System Queue Files\StateFlags0100", &H00000002, "REG_DWORD" 
+		oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Windows Upgrade Log Files\StateFlags0100", &H00000002, "REG_DWORD" 
+		oUtility.RunWithHeartbeat "cleanmgr.exe /sagerun:100"
+
+ 
+
+		' // ============= 
+		' // USER SETTINGS 
+		' // =============
+
+		' Reduce menu show delay 
+		oShell.RegWrite "HKEY_CURRENT_USER\Control Panel\Desktop\MenuShowDelay", "0", "REG_SZ"
+
+
+		' Disable cursor blink 
+		oShell.RegWrite "HKEY_CURRENT_USER\Control Panel\Desktop\CursorBlinkRate", "-1", "REG_SZ" 
+		oShell.RegWrite "HKEY_CURRENT_USER\Control Panel\Desktop\DisableCursorBlink", &H00000001, "REG_DWORD"
+
+
+		' Force off-screen composition in IE 
+		oShell.RegWrite "HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main\Force Offscreen Composition", &H00000001, "REG_DWORD"
+
+
+		' Disable screensavers 
+		oShell.RegWrite "HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Control Panel\Desktop\ScreenSaveActive", "0", "REG_SZ" 
+		oShell.RegWrite "HKEY_CURRENT_USER\Control Panel\Desktop\ScreenSaveActive", "0", "REG_SZ" 
+		oShell.RegWrite "HKEY_USERS\.DEFAULT\Control Panel\Desktop\ScreenSaveActive", "0", "REG_SZ"
+
+
+		' Don't show window contents when dragging 
+		oShell.RegWrite "HKEY_CURRENT_USER\Control Panel\Desktop\DragFullWindows", "0", "REG_SZ"
+
+
+		' Don't show window minimize/maximize animations 
+		oShell.RegWrite "HKEY_CURRENT_USER\Control Panel\Desktop\WindowMetrics\MinAnimate", "0", "REG_SZ"
+
+
+		' Disable font smoothing 
+		oShell.RegWrite "HKEY_CURRENT_USER\Control Panel\Desktop\FontSmoothing", "0", "REG_SZ"
+
+
+		' Disable most other visual effects 
+		oShell.RegWrite "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\VisualFXSetting", &H00000003, "REG_DWORD" 
+		oShell.RegWrite "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ListviewAlphaSelect", &H00000000, "REG_DWORD" 
+		oShell.RegWrite "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarAnimations", &H00000000, "REG_DWORD" 
+		oShell.RegWrite "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ListviewWatermark", &H00000000, "REG_DWORD" 
+		oShell.RegWrite "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ListviewShadow", &H00000000, "REG_DWORD" 
+		oUtility.RunWithConsoleLogging "reg.exe ADD ""HKCU\Control Panel\Desktop"" /v UserPreferencesmasktest /t REG_BINARY /d 90120180 /f"
+
+		' Disable Action Center 
+		oShell.RegWrite "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\HideSCAHealth", &H00000001, "REG_DWORD"
+
+		' Disable IE Persistent Cache 
+		oShell.RegWrite "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Cache\Persistent", 0, "REG_DWORD" 
+		oShell.RegWrite "HKEY_CURRENT_USER\Software\Microsoft\Feeds\SyncStatus", 0, "REG_DWORD"
+
+
+
+		Main = SUCCESS
+
+	End Function
+
+End class
+
+	</script>
+</job>
+<!--
+
+' http://www.neowin.net/forum/topic/1205121-disable-the-windows-store-in-windows-8-and-windows-81/
+
+' // ============== 
+' // General Advice 
+' // ============== 
+' 
+' Before finalizing the image perform the following tasks: 
+' - Ensure no unwanted startup files by using autoruns.exe from SysInternals 
+' - Run the Disk Cleanup tool as administrator and delete all temporary files and system restore points (can be automated with this script) 
+' - Run disk defrag and consolidate free space: defrag c: /v /x 
+' - Reboot the machine 6 times and wait 120 seconds after logging on before performing the next reboot (boot prefetch training) 
+' - Run disk defrag and optimize boot files: defrag c: /v /b 
+' - If using a dynamic virtual disk, use the vendor's utilities to perform a "shrink" operation
+
+
+' // ************* 
+' // *  CAUTION  * 
+' // ************* 
+' 
+' THIS SCRIPT MAKES CONSIDERABLE CHANGES TO THE DEFAULT CONFIGURATION OF WINDOWS. 
+' 
+' Please review this script THOROUGHLY before applying to your virtual machine, and disable changes below as necessary to suit your current 
+' environment. 
+' 
+' This script is provided AS-IS - usage of this source assumes that you are at the very least familiar with the vbscript language being used and the 
+' tools used to create and debug this file. 
+' 
+' In other words, if you break it, you get to keep the pieces.
+
+
+
+	-->

@@ -1,0 +1,74 @@
+; Sysprep.inf file.
+; This file is to automate the mini-setup process after imaging a machine
+
+[Unattended]
+    OemSkipEula = Yes
+    OemPnPDriversPath = "\Drivers\NET"
+    DriverSigningPolicy = Ignore
+;    ExtendOemPartition = 1
+    KeepPageFile = 0
+    UpdateInstalledDrivers = Yes
+
+[GuiRunOnce]
+    "wscript.exe %SystemDrive%\LTIBootstrap.vbs"
+
+
+[Networking]
+    InstallDefaultComponents=Yes
+
+
+[Display]
+    BitsPerPel=16
+    Xresolution=1024
+    YResolution=768
+    Vrefresh=60
+
+
+[TapiLocation]
+    AreaCode=888
+    CountryCode=1
+;    Dialing=Tone
+;    LongDistanceACcess=9
+
+
+[RegionalSettings]
+    LanguageGroup=1
+    Language=00000409
+
+
+[GuiUnattended]
+    AdminPassword=local
+    OEMSkipWelcome=1
+    OEMSkipRegional=1
+    TimeZone=010
+    AutoLogon="Yes"
+    AutoLogonCount=999
+
+
+[Identification]
+   CreateComputerAccountInDomain=Yes
+;   JoinDomain=CONTOSO
+;   MachineObjectOU= "OU=Workstations, dc=contoso, dc=com"
+;   DomainAdmin=Contoso\Administrator
+;   DomainAdminPassword=password
+
+
+[UserData]
+   ComputerName=*
+   FullName="Full Name"
+   OrgName="Organization Name"
+   ProductKey=XXXXX-YYYYY-ZZZZZ-AAAAA-BBBBB
+
+
+[URL]
+   Home_Page=http://www.microsoft.com/
+
+[LicenseFilePrintData]
+    AutoMode=PerSeat
+;    AutoUsers=50
+
+[Sysprep]
+   BuildMassStorageSection = Yes
+
+
+[SysprepMassStorage]

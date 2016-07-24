@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Product Id="*" Name="DeployShared" Language="1033" Version="6.2.5019.1" Manufacturer="DeploymentLive" UpgradeCode="922e8970-5a9b-40df-bec3-dd2a3464c1e9">
+		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+		<Media Id="1" Cabinet="myapplication.cab" EmbedCab="yes" />
+
+		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+		<Feature Id="ProductFeature" Title="DeployShared" Level="1">
+			<ComponentGroupRef Id="ProductComponents" />
+			<ComponentGroupRef Id="BinComponents" />
+			<ComponentGroupRef Id="HydrateComponents" />
+			<ComponentGroupRef Id="LibarayComponents" />
+			<ComponentGroupRef Id="TemplatesComponents" />
+		</Feature>
+
+		<UI>
+			<UIRef Id="WixUI_InstallDir" />
+			<Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
+		</UI>
+		<Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch Hydration Wizard" />
+		<Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+		
+		<WixVariable Id="WixUILicenseRtf" Value="..\EULA.rtf" />
+		<Property Id="WixShellExecTarget" Value="[#FileHydrate]" />
+		<CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />
+
+		<InstallExecuteSequence>
+			<Custom Action="LaunchApplication" After="InstallFinalize">NOT Installed and UILevel = 5</Custom>
+		</InstallExecuteSequence>
+
+	</Product>
+
+	<Fragment>
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFilesFolder">
+				<Directory Id="INSTALLFOLDER" Name="DeployShared">
+					<Directory Id="BIN_Folder" Name="Bin" />
+					<Directory Id="DOWNLOAD_Folder" Name="Downloads" />
+				</Directory>
+			</Directory>
+		</Directory>
+	</Fragment>
+
+	<Fragment>
+		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+			<Component Id="CFile00001">
+				<File Id="FileEula" Source="..\EULA.rtf" KeyPath="yes" Checksum="yes"/>
+				<RegistryKey Id="Deployment4_Key" Root="HKLM" Key="Software\Microsoft\Deployment 4" Action="createAndRemoveOnUninstall" >
+					<RegistryValue Id="MDTEx1" Name="Install_Dir" Action="write" Type="string" Value="[INSTALLFOLDER]" />
+					<RegistryValue Id="MDTEx2" Name="Install_UI" Action="write" Type="string" Value="[UILevel]" />
+				</RegistryKey>
+			</Component>
+		</ComponentGroup>
+
+		<ComponentGroup Id="BinComponents" Directory="BIN_Folder">
+			<Component Id="CFile00002">
+				<File Id="FileAbout" Source="..\About.txt" KeyPath="yes" Checksum="yes"/>
+			</Component>
+			<Component Id="CFile00003">
+				<File Id="FileHydrate" Source="..\..\Bin\PowerShell Wizard Host.exe" Name="MDTExHydrate.exe" KeyPath="yes" Checksum="yes"/>
+			</Component>
+		</ComponentGroup>
+
+	</Fragment>
+</Wix>

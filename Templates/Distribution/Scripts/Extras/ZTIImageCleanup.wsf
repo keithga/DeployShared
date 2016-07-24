@@ -1,0 +1,188 @@
+<job id="ZTIImageCleanup">
+	<script language="VBScript" src="..\ZTIUtility.vbs"/>
+	<script language="VBScript">
+
+' // ***************************************************************************
+' // 
+' // Copyright (c) Deployment Live.  All rights reserved.
+' // 
+' // Microsoft Deployment Toolkit Extensions http://MDTEx.codeplex.com
+' //
+' // File:      ZTIImageCleanup.wsf
+' // 
+' // Version:   <VERSION>
+' // 
+' // Usage:     cscript.exe [//nologo] ImageCleanup.wsf [/debug:true]
+' // 
+' // ***************************************************************************
+
+Option Explicit
+RunNewInstance
+
+'//----------------------------------------------------------------------------
+'//  Main Class
+'//----------------------------------------------------------------------------
+
+Class ZTIImageCleanup
+
+	'//----------------------------------------------------------------------------
+	'//  Main routine
+	'//----------------------------------------------------------------------------
+
+	Function GetRegRoot ( sPath )
+
+		GetRegRoot = &H80000002 ' HKLM HKEY_LOCAL_MACHINE
+		If instr(1,sPath,"\",vbTextCompare) > 1 then
+			Select case uCase(mid(sPath,1,instr(1,sPath,"\",vbTextCompare)-1))
+				case "HKEY_CLASSES_ROOT", "HKCR"
+					GetRegRoot = &h80000000
+				case "HKEY_CURRENT_USER", "HKCU"
+					GetRegRoot = &h80000001
+				case "HKEY_USERS", "HKU"
+					GetRegRoot = &h80000003
+				case "HKEY_CURRENT_CONFIG", "HKCC"
+					GetRegRoot = &h80000005
+			End Select
+		End if
+
+	End Function
+
+	Function GetRegKey ( sPath )
+
+		GetRegKey = sPath
+		If instr(1,sPath,"\",vbTextCompare) > 1 and mid(sPath,1,1) = "H" then
+			GetRegKey = mid(sPath, instr(1,sPath,"\",vbTextCompare)+1)
+		End if
+	End Function
+
+	Function GetRegSubKeys( sRegPath )
+
+		Dim arrSubKeys
+		DIm iResult
+
+		GetRegSubKeys = array()
+		If GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv").EnumKey( GetRegRoot(sRegPath) , GetRegKey(sRegPath), arrSubKeys) = 0 then
+			If isArray(arrSubKeys) then
+				GetRegSubKeys = arrSubKeys
+			End if
+		End if
+
+	End Function
+		
+	Function GetRegSubValues( sRegPath )
+
+		Dim arrSubValues
+		Dim arrSubTypes
+
+		GetRegSubValues = array()
+		If GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv").EnumValues( GetRegRoot(sRegPath) , GetRegKey(sRegPath), arrSubValues, arrSubTypes) = 0 then
+			If isArray(arrSubValues) then
+				GetRegSubValues = arrSubValues
+			End if
+		end if
+
+	End Function
+
+	Function Main
+
+		Dim item
+		Dim Start
+		Dim bDirty
+
+		bDirty = False
+
+		'//----------------------------------------------------------------------------
+
+		If ucase(oEnvironment.Item("WSUSClean")) <> "False" then
+			oShell.RegWrite "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\WUServer", "", "REG_SZ"
+			oShell.RegWrite "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\WUStatusServer", "", "REG_SZ"
+			oShell.RegWrite "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU\UseWUServer", 0, "REG_DWORD"
+		End if
+
+		'//----------------------------------------------------------------------------
+
+		oLogging.CreateEntry "Test for pending reboot status...", LogTypeInfo
+
+		if not isEmpty(oUtility.RegReadEx("HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\PendingFileRenameOperations",false)) then
+			oLogging.CreateEntry "Pending renames found.", LogTypeInfo
+			bDirty = true
+		End if
+
+		For Each item in GetRegSubValues("HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired")
+			oLogging.CreateEntry "WU Reboot required " & item, LogTypeInfo
+			bDirty = True
+		next
+		
+		If bDirty then
+			oEnvironment.Item("SMSTSRebootRequested") = "true"
+			oEnvironment.Item("SMSTSRetryRequested") = "true"
+			exit function
+		End if
+
+		'//----------------------------------------------------------------------------
+
+		for each item in array ( "Active Setup Temp Folders", "Content Indexer Cleaner", "Device Driver Packages", "Downloaded Program Files", "Internet Cache Files", _
+				"Memory Dump Files", "Offline Pages Filges", "Old ChkDsk Files", "Previous Installations", "Recycle Bin", "Service Pack Cleanup", "Setup Log Files", _
+				"System error memory dump files", "System error minidump files", "Temporary Files", "Temporary Setup Files", "Temporary Sync Files", "Thumbnail Cache", _
+				"Update Cleanup", "Upgrade Discarded Files", "Windows Error Reporting Archive Files", "Windows Error Reporting Queue Files", _
+				"Windows Error Reporting System Archive Files", "Windows Error Reporting System Queue Files", "Windows ESD installation files", "Windows Upgrade Log Files" )
+			oUtility.RegWrite "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\" & item & "\StateFlags5432", 2
+		next
+
+		Start = ofso.GetDrive("C:").FreeSpace
+
+		oUtility.GetMajorMinorVersion(oEnvironment.Item("OSCurrentVersion"))
+		If oUtility.BuildNumber >= 9200 then
+			oUtility.RunWithConsoleLogging "DISM.exe /online /cleanup-image /analyzecomponentstore"
+			oUtility.RunWithConsoleLogging "DISM.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase"
+			oUtility.RunWithConsoleLogging "DISM.exe /online /cleanup-image /analyzecomponentstore"
+		Else
+			oUtility.RunWithConsoleLogging "DISM.exe /online /Cleanup-Image"
+		End if
+
+		oLogging.CreateEntry "Disk Free (Post): " & ofso.GetDrive("C:").FreeSpace & "  Savings: " & ( ofso.GetDrive("C:").FreeSpace - Start) , LogTypeInfo
+
+		oLogging.CreateEntry "ready to run CleanMgr.exe" , LogTypeInfo
+		If oFSO.FileExists("c:\windows\system32\CleanMgr.exe") then
+			oUtility.RunWithConsoleLogging "CleanMgr.exe /sagerun:5432"
+		End if
+
+		oLogging.CreateEntry "Disk Free (Final): " & ofso.GetDrive("C:").FreeSpace & "  Savings: " & ( ofso.GetDrive("C:").FreeSpace - Start) , LogTypeInfo
+
+		'//----------------------------------------------------------------------------
+
+		'//  If there is a HyperV_Persist.xml file, and this is a capture, prepare the unattend.xml file.
+		
+		If oFSO.FileExists(oEnvironment.Item("DeployRoot") & "\tools\HyperV_Persist.xml") then
+			if ucase(oEnvironment.Item("OSDAnswerFilePath")) = "SYSPREP" then
+				oEnvironment.Item("OSDAnswerFilePath") = oEnvironment.Item("DeployRoot") & "\tools\HyperV_Persist.xml"
+				If oFSO.FileExists("c:\windows\panther\unattend.xml") then
+					oFSO.DeleteFile("c:\windows\panther\unattend.xml")
+				End if
+			End if
+
+		End if
+
+
+		'//----------------------------------------------------------------------------
+
+		oLogging.CreateEntry "Test for pending package reboots...", LogTypeInfo
+		For Each item in GetRegSubKeys("HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\PackagesPending")
+			oLogging.CreateEntry "CBS Pending Reboot found " & item, LogTypeInfo
+			bDirty = True
+		next
+
+		If bDirty then
+			oEnvironment.Item("SMSTSRebootRequested") = "true"
+			' oEnvironment.Item("SMSTSRetryRequested") = "true"
+			exit function
+		End if 
+
+		Main = SUCCESS
+
+	End Function
+
+End class
+
+	</script>
+</job>

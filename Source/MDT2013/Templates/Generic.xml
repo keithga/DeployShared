@@ -1,0 +1,32 @@
+<Definition>
+  <WindowsPE>
+	
+	<!-- Settings -->
+	<Version />
+	<Source />
+	<ScratchSpace>64</ScratchSpace>
+	<ImageName />
+	<ImageDescription />
+
+	<!-- Components -->
+	<Components>
+	  <Component>winpe-hta</Component>
+	  <Component>winpe-scripting</Component>
+	  <Component>winpe-wmi</Component>
+	</Components>
+	
+	<!-- Driver and packages -->
+	<Drivers />
+	<Packages />
+	
+	<!-- Content -->
+	<Content>
+	</Content>
+
+	<!-- Exits -->
+	<Exits>
+	  <Exit>cscript.exe "%INSTALLDIR%\Samples\UpdateExit.vbs"</Exit>
+	</Exits>
+	
+  </WindowsPE>
+</Definition>

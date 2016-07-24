@@ -1,0 +1,82 @@
+<job id="SetUpgradeStatus">
+   <script language="VBScript" src="ZTIUtility.vbs"/>
+   <script language="VBScript" src="ZTIDataAccess.vbs"/>
+   <script language="VBScript">
+
+' // ***************************************************************************
+' // 
+' // Copyright (c) Microsoft Corporation.  All rights reserved.
+' // 
+' // Microsoft Deployment Toolkit Solution Accelerator
+' //
+' // File:      SetUpgradeStatus.wsf
+' // 
+' // Version:   6.3.8298.1000
+' // 
+' // Purpose:   Logs Windows Upgrade Failure error
+' // 
+' // Usage:     cscript SetUpgradeStatus.wsf [/debug:true]
+' // 
+' // ***************************************************************************
+
+Option Explicit
+RunNewInstance
+
+'//----------------------------------------------------------------------------
+'//  Main Class
+'//----------------------------------------------------------------------------
+
+Class SetUpgradeStatus
+	
+	'//----------------------------------------------------------------------------
+	'//  Constructor to initialize needed global objects
+	'//----------------------------------------------------------------------------
+
+	Private Sub Class_Initialize
+		
+	End Sub
+
+
+	'//----------------------------------------------------------------------------
+	'//  Main routine
+	'//----------------------------------------------------------------------------
+
+	Function Main	
+		Dim args
+		Dim arg
+		Dim retCode			
+		Dim runOnceRegVal
+
+		oLogging.CreateEntry "------  Register return code for Upgrade ------", LogTypeInfo
+		Set args = WScript.Arguments
+		For Each arg in args		
+			retCode = Split(arg,":")
+			oLogging.CreateEntry "Register Upgrade status as =  " & retCode(1) , LogTypeInfo
+			oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Windows\Win10UpgradeStatusCode", retCode(1), "REG_SZ"
+			if retCode(1) = "COMPLETED" then				
+				For Each oDrive in oFSO.Drives
+					If oDrive.IsReady then
+						If oFSO.FileExists(oDrive.DriveLetter & ":\MININT\Scripts\LTIBootstrapUpgradeSummary.vbs") then
+							runOnceRegVal = "wscript.exe """ & oDrive.DriveLetter & ":\MININT\Scripts\LTIBootstrapUpgradeSummary.vbs"""
+							oLogging.CreateEntry " Upgrade: setting RunOnce key to display LTI Success screen" , LogTypeInfo
+							oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce\", runOnceRegVal, "REG_SZ"	
+							
+							oLogging.CreateEntry " Upgrade: Setupcomplete successful, restore reg keys to defaults" , LogTypeInfo
+							oShell.RegWrite "HKEY_LOCAL_MACHINE\SYSTEM\Setup\SetupType", 0, "REG_DWORD"
+							oShell.RegWrite "HKEY_LOCAL_MACHINE\SYSTEM\Setup\CmdLine", "", "REG_SZ"
+							
+							oLogging.CreateEntry " Upgrade: deleting temporary Upgrade Status registry values" , LogTypeInfo
+							oShell.RegDelete "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Windows\Win10UpgradeStatusCode"
+							oLogging.CreateEntry " Upgrade: deleted temporary Upgrade Status registry values sucessfully" , LogTypeInfo
+							Exit For
+						End if
+					End if
+				Next				
+			End if
+		Next		
+	End Function
+
+ End Class
+
+ </script>
+</job>

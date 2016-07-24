@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<sequence version="3.00" name="Custom Task Sequence" description="Sample Custom Task Sequence">
+  <step type="BDD_InstallApplication" name="Install Application" description="" disable="false" continueOnError="false" runIn="WinPEandFullOS" successCodeList="0 3010">
+	<defaultVarList>
+	  <variable name="ApplicationGUID" property="ApplicationGUID"></variable>
+	  <variable name="ApplicationSuccessCodes" property="ApplicationSuccessCodes">0 3010</variable>
+	</defaultVarList>
+	<action>cscript.exe "%SCRIPTROOT%\ZTIApplications.wsf"</action>
+  </step>
+</sequence>

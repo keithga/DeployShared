@@ -1,0 +1,62 @@
+<job id="ConfigiSCSI">
+	<script language="VBScript" src="..\..\scripts\ZTIUtility.vbs"/>
+	<script language="VBScript">
+
+' // ***************************************************************************
+' // 
+' // Copyright (c) Microsoft Corporation.  All rights reserved.
+' // 
+' // Microsoft Deployment Toolkit Solution Accelerator
+' //
+' // File:      ConfigiSCSI.wsf
+' // 
+' // Version:   <VERSION>
+' // 
+' // Purpose:   configure iSCSI Initiator
+' // 
+' // Usage:     cscript.exe [//nologo] ConfigiSCSI.wsf [/debug:true]
+' // 
+' // ***************************************************************************
+
+Option Explicit
+RunNewInstance
+
+'//----------------------------------------------------------------------------
+'//  Main Class
+'//----------------------------------------------------------------------------
+
+Class ConfigiSCSI
+
+
+	'//----------------------------------------------------------------------------
+	'//  Main routine
+	'//----------------------------------------------------------------------------
+
+	Function Main
+	
+		Main = SUCCESS
+
+		' Main script processing
+
+		If ucase(oEnvironment.Item("isVM")) = "TRUE" then
+
+			oLogging.CreateEntry "Environment is Virtual, do not enable iSCSI.", LogTypeInfo
+			exit function
+
+		End if
+
+		oUtility.RunWithConsoleLogging "sc config msiSCSI start= auto"
+
+		oUtility.RunWithConsoleLogging "net start msiSCSI"
+
+		oUtility.RunWithConsoleLogging "netsh advfirewall firewall set rule ""iSCSI Service (TCP-Out)"" new enable=yes"
+
+		oUtility.RunWithConsoleLogging "Iscsicli FirewallExemptiSNSServer"
+
+	End Function
+
+
+End class
+
+	</script>
+</job>

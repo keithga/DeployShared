@@ -1,0 +1,165 @@
+<?xml version="1.0"?>
+<sequence version="3.00" name="Post OS Installation Task Sequence" description="A task sequence for configuring an Operating System after install">
+  <group name="State Restore" disable="false" continueOnError="false" description="" expand="true">
+    <step type="SMS_TaskSequence_SetVariableAction" name="Set Image Build" description="" disable="false" continueOnError="false" successCodeList="0 3010">
+      <defaultVarList>
+        <variable name="VariableName" property="VariableName">ImageBuild</variable>
+        <variable name="VariableValue" property="VariableValue">%OSCURRENTVERSION%</variable>
+      </defaultVarList>
+      <action>cscript.exe "%SCRIPTROOT%\ZTISetVariable.wsf"</action>
+    </step>
+    <step type="SMS_TaskSequence_SetVariableAction" name="Set ImageFlags" description="" disable="false" continueOnError="false" successCodeList="0 3010">
+      <defaultVarList>
+        <variable name="VariableName" property="VariableName">ImageFlags</variable>
+        <variable name="VariableValue" property="VariableValue">%OSSKU%</variable>
+      </defaultVarList>
+      <action>cscript.exe "%SCRIPTROOT%\ZTISetVariable.wsf"</action>
+    </step>
+    <step type="SMS_TaskSequence_SetVariableAction" name="Set Phase" description="" disable="false" continueOnError="false" successCodeList="0 3010">
+      <defaultVarList>
+        <variable name="VariableName" property="VariableName">PHASE</variable>
+        <variable name="VariableValue" property="VariableValue">STATERESTORE</variable>
+      </defaultVarList>
+      <action>cscript.exe "%SCRIPTROOT%\ZTISetVariable.wsf"</action>
+    </step>
+    <step type="SMS_TaskSequence_ApplyNetworkSettingsAction" name="Apply Network Settings" disable="false" continueOnError="false" successCodeList="0" description="" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\ZTINICConfig.wsf"</action>
+      <defaultVarList>
+        <variable name="OSDAdapterCount" property="NumAdapters">0</variable>
+        <variable name="OSDAdapter" property="Adapters">0</variable>
+      </defaultVarList>
+    </step>
+    <step type="BDD_Gather" name="Gather local only" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+      <defaultVarList>
+        <variable name="GatherLocalOnly" property="GatherLocalOnly">true</variable>
+        <variable name="RulesFile" property="RulesFile"></variable>
+      </defaultVarList>
+      <action>cscript.exe "%SCRIPTROOT%\ZTIGather.wsf"</action>
+    </step>
+    <step name="Post-Apply Cleanup" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\LTIApply.wsf" /post</action>
+    </step>
+    <step name="Tattoo" disable="false" continueOnError="true" successCodeList="0 3010" description="" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\ZTITatoo.wsf"</action>
+    </step>
+    <step name="Opt In to CEIP and WER" disable="true" continueOnError="true" successCodeList="0 3010" description="" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\ZTIOptIn.wsf" /CEIP:YES /WER:YES</action>
+    </step>
+    <step name="Windows Update (Pre-Application Installation)" disable="true" continueOnError="true" successCodeList="0 3010" description="" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\ZTIWindowsUpdate.wsf"</action>
+    </step>
+    <step type="BDD_InstallApplication" name="Install Applications" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\ZTIApplications.wsf"</action>
+      <defaultVarList>
+        <variable name="ApplicationGUID" property="ApplicationGUID"></variable>
+        <variable name="ApplicationSuccessCodes" property="ApplicationSuccessCodes">0 3010</variable>
+      </defaultVarList>
+    </step>
+    <step name="Windows Update (Post-Application Installation)" disable="true" continueOnError="true" successCodeList="0 3010" description="" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\ZTIWindowsUpdate.wsf"</action>
+    </step>
+    <group name="Custom Tasks" disable="false" continueOnError="false" expand="true" description=""></group>
+    <step type="SMS_TaskSequence_EnableBitLockerAction" name="Enable BitLocker" continueOnError="true" successCodeList="0 3010" description="" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\ZTIBde.wsf"</action>
+      <condition>
+        <expression type="SMS_TaskSequence_VariableConditionExpression">
+          <variable name="Variable">BdeInstallSuppress</variable>
+          <variable name="Operator">notEquals</variable>
+          <variable name="Value">YES</variable>
+        </expression>
+      </condition>
+      <defaultVarList>
+        <variable name="OSDBitLockerTargetDrive" property="BdeTargetDriveLetter"></variable>
+        <variable name="OSDBitLockerMode" property="BdeInstall">TPM</variable>
+        <variable name="OSDBitLockerStartupKeyDrive" property="BdeKeyLocation"></variable>
+        <variable name="OSDBitLockerCreateRecoveryPassword" property="BdeRecoveryPassword">AD</variable>
+        <variable name="OSDBitLockerWaitForEncryption" property="WaitForEncryption">false</variable>
+      </defaultVarList>
+    </step>
+    <step name="Restore User State" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\ZTIUserState.wsf" /restore</action>
+    </step>
+    <step name="Restore Groups" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\ZTIGroups.wsf" /restore</action>
+    </step>
+    <step name="Apply Local GPO Package" description="" disable="false" continueOnError="false" startIn="" successCodeList="0 3010">
+      <action>cscript.exe "%SCRIPTROOT%\ZTIApplyGPOPack.wsf"</action>
+      <condition>
+        <expression type="SMS_TaskSequence_VariableConditionExpression">
+          <variable name="Variable">ApplyGPOPack</variable>
+          <variable name="Operator">notEquals</variable>
+          <variable name="Value">NO</variable>
+        </expression>
+      </condition>
+    </step>
+    <group expand="false" name="Imaging" description="" disable="false" continueOnError="false">
+      <action />
+      <group name="Prepare Only" disable="false" continueOnError="false" expand="true" description="">
+        <condition>
+          <expression type="SMS_TaskSequence_VariableConditionExpression">
+            <variable name="Variable">DoCapture</variable>
+            <variable name="Operator">equals</variable>
+            <variable name="Value">PREPARE</variable>
+          </expression>
+        </condition>
+        <step name="Copy Sysprep files" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+          <action>cscript.exe "%SCRIPTROOT%\LTISysprep.wsf"</action>
+        </step>
+      </group>
+      <group name="Sysprep Only" disable="false" continueOnError="false" expand="true" description="">
+        <condition>
+          <expression type="SMS_TaskSequence_VariableConditionExpression">
+            <variable name="Variable">DoCapture</variable>
+            <variable name="Operator">equals</variable>
+            <variable name="Value">SYSPREP</variable>
+          </expression>
+        </condition>
+        <step name="Add mass storage drivers to sysprep.inf for XP and 2003" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+          <action>cscript.exe "%SCRIPTROOT%\ZTIDrivers.wsf"</action>
+        </step>
+        <step name="Execute Sysprep" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+          <action>cscript.exe "%SCRIPTROOT%\LTISysprep.wsf"</action>
+        </step>
+      </group>
+      <group name="Capture Image" disable="false" continueOnError="false" expand="true" description="">
+        <condition>
+          <expression type="SMS_TaskSequence_VariableConditionExpression">
+            <variable name="Variable">DoCapture</variable>
+            <variable name="Operator">equals</variable>
+            <variable name="Value">YES</variable>
+          </expression>
+        </condition>
+        <step name="Apply Windows PE" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+          <action>cscript.exe "%SCRIPTROOT%\LTIApply.wsf" /PE /STAGE</action>
+        </step>
+        <step name="Add mass storage drivers to sysprep.inf for XP and 2003" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+          <action>cscript.exe "%SCRIPTROOT%\ZTIDrivers.wsf"</action>
+        </step>
+        <step name="Execute Sysprep" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+          <action>cscript.exe "%SCRIPTROOT%\LTISysprep.wsf"</action>
+        </step>
+        <step name="Apply Windows PE (BCD)" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+          <action>cscript.exe "%_SMSTSMDataPath%\Scripts\LTIApply.wsf" /PE /BCD</action>
+        </step>
+        <step type="SMS_TaskSequence_RebootAction" name="Restart computer" description="" disable="false" continueOnError="false" runIn="WinPEandFullOS" successCodeList="0 3010">
+          <defaultVarList>
+            <variable name="Message" property="Message"></variable>
+            <variable name="MessageTimeout" property="MessageTimeout">60</variable>
+            <variable name="Target" property="Target"></variable>
+          </defaultVarList>
+          <action>smsboot.exe /target:WinPE</action>
+        </step>
+        <step type="BDD_Gather" name="Gather local only" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+          <defaultVarList>
+            <variable name="GatherLocalOnly" property="GatherLocalOnly">true</variable>
+            <variable name="RulesFile" property="RulesFile"></variable>
+          </defaultVarList>
+          <action>cscript.exe "%SCRIPTROOT%\ZTIGather.wsf"</action>
+        </step>
+        <step name="Create WIM" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+          <action>cscript.exe "%SCRIPTROOT%\ZTIBackup.wsf"</action>
+        </step>
+      </group>
+    </group>
+  </group>
+</sequence>

@@ -1,0 +1,259 @@
+<job id="ImageFactoryFork">
+	<script language="VBScript" src="..\ZTIUtility.vbs"/>
+	<script language="VBScript">
+
+' // ***************************************************************************
+' // 
+' // File:      ImageFactoryFork.wsf
+' // 
+' // Author:    DeploymentLive.com, All rights reserved.
+' // 
+' // Version:   1.0
+' // 
+' // Purpose:   Create a forking point for Hydration Host to create mulitple images from the same VM.
+' // 
+' // Usage:     cscript ImageFactoryFork.wsf [/debug:true]
+' // 
+' // ***************************************************************************
+
+Option Explicit
+RunNewInstance
+
+'//----------------------------------------------------------------------------
+'//  Main Class
+'//----------------------------------------------------------------------------
+
+Class ImageFactoryFork
+
+
+	Function GetRegRoot ( sPath )
+
+		GetRegRoot = &H80000002 ' HKLM HKEY_LOCAL_MACHINE
+		If instr(1,sPath,"\",vbTextCompare) > 1 then
+			Select case uCase(mid(sPath,1,instr(1,sPath,"\",vbTextCompare)-1))
+				case "HKEY_CLASSES_ROOT", "HKCR"
+					GetRegRoot = &h80000000
+				case "HKEY_CURRENT_USER", "HKCU"
+					GetRegRoot = &h80000001
+				case "HKEY_USERS", "HKU"
+					GetRegRoot = &h80000003
+				case "HKEY_CURRENT_CONFIG", "HKCC"
+					GetRegRoot = &h80000005
+			End Select
+		End if
+
+	End Function
+
+	Function GetRegKey ( sPath )
+
+		GetRegKey = sPath
+		If instr(1,sPath,"\",vbTextCompare) > 1 and mid(sPath,1,1) = "H" then
+			GetRegKey = mid(sPath, instr(1,sPath,"\",vbTextCompare)+1)
+		End if
+	End Function
+
+	Function GetRegSubKeys( sRegPath )
+
+		Dim arrSubKeys
+		DIm iResult
+
+		GetRegSubKeys = array()
+		If GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv").EnumKey( GetRegRoot(sRegPath) , GetRegKey(sRegPath), arrSubKeys) = 0 then
+			If isArray(arrSubKeys) then
+				GetRegSubKeys = arrSubKeys
+			End if
+		End if
+
+	End Function
+		
+	Function GetRegSubValues( sRegPath )
+
+		Dim arrSubValues
+		Dim arrSubTypes
+
+		GetRegSubValues = array()
+		If GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv").EnumValues( GetRegRoot(sRegPath) , GetRegKey(sRegPath), arrSubValues, arrSubTypes) = 0 then
+			If isArray(arrSubValues) then
+				GetRegSubValues = arrSubValues
+			End if
+		end if
+
+	End Function
+		
+	'//----------------------------------------------------------------------------
+	'//  Main routine
+	'//----------------------------------------------------------------------------
+
+	Function Main
+
+		Dim bDirty
+		Dim item
+
+		bDirty = False
+
+		oLogging.CreateEntry "Test for pending reboot status...", LogTypeInfo
+
+		if not isEmpty(oUtility.RegReadEx("HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\PendingFileRenameOperations",false)) then
+			oLogging.CreateEntry "Pending renames found.", LogTypeInfo
+			bDirty = true
+		End if
+
+		For Each item in GetRegSubValues("HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired")
+			oLogging.CreateEntry "WU Reboot required " & item, LogTypeInfo
+			bDirty = True
+		next
+		
+		oLogging.CreateEntry "Test for pending package reboots...", LogTypeInfo
+		For Each item in GetRegSubKeys("HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\PackagesPending")
+			oLogging.CreateEntry "CBS Pending Reboot found " & item, LogTypeInfo
+			bDirty = True
+		next
+
+		If bDirty then
+			oEnvironment.Item("SMSTSRebootRequested") = "true"
+			oEnvironment.Item("SMSTSRetryRequested") = "true"
+			exit function
+		End if 
+
+		'//----------------------------------------------------------------------------
+
+		if oEnvironment.Item("DoCapture") = "" then
+
+			oLogging.CreateEntry "Not a Capture Scenario!", LogTypeInfo
+
+		elseif oEnvironment.Item("ImageFactoryFork") = "" then
+
+			' Shutdown the machine so the Host can CheckPoint the current state cleanly.
+
+			oLogging.CreateEntry "ImageFactoryFork New!", LogTypeInfo
+
+			' Prevent auto update (can cause problems during the long periods between forks
+			oShell.RegWrite "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU\NoAutoUpdate", 1, "REG_DWORD"
+			oUtility.RegWrite "HKLM\SOFTWARE\Microsoft\Virtual Machine\Auto\ImageFactoryFork", "CheckPoint"
+			oEnvironment.Item("ImageFactoryFork") = "CheckPoint"
+
+			SuspendAndShutdown
+
+		ElseIf oEnvironment.Item("ImageFactoryFork") = "CheckPoint" then
+
+			oEnvironment.Item("ImageFactoryFork") = "Done"
+			oEnvironment.Item("LTISuspend") = ""
+
+			' After forking, reload the variables and continue.
+
+			while oUtility.RegReadEx("HKLM\SOFTWARE\Microsoft\Virtual Machine\External\BackupFile", false) = ""
+				oLogging.CreateEntry "New Properties not found!", LogTypeInfo
+				oUtility.SafeSleep 10
+			wend
+
+			oLogging.CreateEntry "ImageFactoryFork ReloadVariables!", LogTypeInfo
+
+			LoadKVPFromHyperV
+
+			If lcase(oEnvironment.Item("ConvertToServerCore")) = "true" then
+
+				oLogging.CreateEntry "Creating RunOnce registry key to run LiteTouch.wsf for the next reboot.", LogTypeInfo
+
+				On Error Resume Next
+				oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce\LiteTouch", "wscript.exe """ & oUtility.LocalRootPath & "\Scripts\LiteTouch.wsf""", "REG_SZ"
+				TestAndLog SUCCESS, "Wrote Run registry key"
+			
+				if UCase(oEnvironment.Item("DisableTaskMgr")) = "YES" then
+					oShell.RegWrite "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System\DisableTaskMgr", 1, "REG_DWORD"
+					TestAndLog SUCCESS, "Wrote disable Task Manager registry key"
+				End if		
+			
+				On Error Goto 0
+
+				' Allow execution to continue (assuming new RunOnce item won't actually be run yet)
+
+			End if
+
+		Else
+
+			oLogging.CreateEntry "ImageFactoryFork Unknown state: " & oEnvironment.Item("ImageFactoryFork"), LogTypeWarning
+
+		End if
+
+		Main = SUCCESS
+		exit function
+
+	End function
+
+	Function SuspendAndShutdown
+
+		PopulateAutoAdminLogon
+
+		If not oFSO.FileExists(oEnv("SystemRoot") & "\Explorer.exe") then
+			oLogging.CreateEntry "Creating RunOnce registry key to run LiteTouch.wsf for the next reboot (required for Core OSes).", LogTypeInfo
+			oShell.RegWrite "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce\LiteTouch", "wscript.exe """ & oUtility.LocalRootPath & "\Scripts\LiteTouch.wsf""", "REG_SZ"
+		End if
+		oEnvironment.Item("SMSTSRetryRequested") = "true"
+		oEnvironment.Item("SMSTSRebootRequested") = "true"
+		oEnvironment.Item("LTIDirty") = "FALSE"
+		oEnvironment.Item("LTISuspend") = "True"
+
+		oUtility.RunWithConsoleLogging("Shutdown.exe -s -f -t 60")
+
+	End Function
+
+	Function PopulateAutoAdminLogon
+
+		Dim iRetVal, colUserAccounts, oAccount,bAutoAdminLogon,AdminAccount
+		On Error Resume Next
+		bAutoAdminLogon = oShell.RegRead("HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\AutoAdminLogon")
+		On Error Goto 0
+		If bAutoAdminLogon = 0 then
+
+			'Determine Local Administrator Account
+			Set colUserAccounts = objWMI.ExecQuery("Select * From Win32_UserAccount where LocalAccount = TRUE")
+			For each oAccount in colUserAccounts
+				If Left(oAccount.SID, 6) = "S-1-5-" and Right(oAccount.SID, 4) = "-500" Then
+					AdminAccount = oAccount.Name
+				End iF
+			Next
+			iRetval = oShell.RegWrite("HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\AutoAdminLogon", 1, "REG_SZ")
+			iRetval = oShell.RegWrite("HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\AutoLogonCount", 999, "REG_SZ")
+			iRetval = oShell.RegWrite("HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\DefaultUserName", AdminAccount, "REG_SZ")
+
+			iRetVal = oShell.RegWrite("HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\DefaultDomainName", ".", "REG_SZ")
+
+			iRetval = oShell.RegWrite("HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\DefaultPassword", oEnvironment.Item("AdminPassword"), "REG_SZ")
+			TestAndLog iRetVal, "Updated registry with AutoLogon"
+			wscript.sleep 5000
+
+		Else
+		
+			PopulateAutoAdminLogon = Success
+			Exit Function
+			
+		End If
+
+		PopulateAutoAdminLogon = Success
+
+	End Function
+
+	Function LoadKVPFromHyperV()
+		Dim iResult
+		Dim aNames
+		DIm aTypes
+		Dim sName
+
+		LoadKVPFromHyperV = False
+		if GetObject("winmgmts:root\default:StdRegProv").EnumValues(&H80000002, "SOFTWARE\Microsoft\Virtual Machine\External", aNames, aTypes) = 0 then
+			if isArray( aNames ) then
+				for each sName in aNames
+					LoadKVPFromHyperV = true
+					oEnvironment.Item(sName) = oEnvironment.Substitute(oUtility.RegRead("HKLM\SOFTWARE\Microsoft\Virtual Machine\External\" & sName))
+				next
+			End if
+		End if
+
+	End Function
+
+
+
+End Class
+
+	</script>
+</job>

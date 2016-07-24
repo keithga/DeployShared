@@ -1,0 +1,433 @@
+[Data]
+    AutoPartition=1
+    MsDosInitiated="0"
+    UnattendedInstall="Yes"
+
+[Unattended]
+    UnattendMode = FullUnattended
+    OemSkipEula = Yes
+    OemPreinstall = Yes
+    OemPnPDriversPath = "\Drivers"
+    TargetPath = \Windows
+    DriverSigningPolicy = Ignore
+    DUDisable = Yes
+    DUStopOnError = No
+;    ExtendOemPartition = 1			; If Set extends disk partition to end of disk or by x MB
+;    FileSystem = ConvertNTFS			; Specify wheter to leave filesystem alone or convert to NTFS
+;    AutoActivate = No				; Determines if Windows should auto activate over Internet
+;    ActivateProxy = Proxy			; Proxy Setting to use when auto activating windows
+    CrashDumpSetting = 3		 	; 3=small memory dump 0-3
+    DisableDynamicUpdates = Yes 		; Don't go get updates from Internet during install
+    Hibernation = Yes				; Yes=Enables hibernation, No=Disabled hibernation
+    WaitForReboot = No				; Yes=Wait 15seconds after guimode setup to reboot
+;    ComputerType =				; Defines Custom HAL type
+;    Factory = Yes				; Used in conjuction with OPK If yes will not delete Sysprep directory
+;    ForceHalDetection = No			; Used in upgrades to keep previous hal
+;    Keyboardlayout =				; Allows specification of keyboard type
+;    NTUpgrade = No				; Indicates whether or not this is an OS upgrade	
+;    OverwriteOEMFilesOnUpgrade = 0		; Indicates whether OEM files should be overwritten
+;    Repartition = 1				; Only when booting to CD specify 1 to repartition hard disk
+;    UnattendSwitch = No			; Set to yes during winnt installation to skip welcome
+;    Win9xUpgrade = No				; Indicats if this is an upgrade and to use [Win9xUpg] section
+
+
+[Uninstall]
+; This section has settings to allow an upgraded system to be uninstalled
+
+
+[GuiRunOnce]
+    "wscript.exe %SystemDrive%\LTIBootstrap.vbs"
+
+
+[LicenseFilePrintData]
+    AutoMode=PerSeat				; Licensing Mode usually perseat
+;    AutoUsers=50				; When in PerServer mode=number of licenses
+
+
+[RegionalSettings]
+; IF this section is used the Winnt32.exe /copysource:lang setting must be specified
+;    InputLocale_DefaultUser=			; Specifies the Inputlocal and keyboard setting for default user
+;    UserLocale_DefaultUser=			; Locale ID for default User
+;    InputLocale				; Locale\Keyboard combinations to be installed
+;    Language=					; Lanugage locale to be installed
+;    LanguageGroup=				; Language Group to be installed
+;    SystemLocale=				; System Locale to be specified
+;    UserLocale=				; User Locale setting
+
+
+[GuiUnattended]
+;    Arguments=					; Used with Detached programs to provide arguments
+    OEMSkipRegional=1				; Indicates Regional info GUI to be skipped in setup
+;     EncryptedAdminPassword=No			; For OEMs allows use of hashpwd.exe cannot be used with autologon
+    TimeZone="010"				; Sets Timezone 010=Mountain
+    OemSkipWelcome=1				; Used to skip welcome screens in GUI setup
+;    ProfilesDir=""				; Allows to change default location of profiles
+    AutoLogon="Yes"				; Indicates that system should autologon after reboot
+    AutoLogonCount=999				; Number of times to auto logon
+;    DetachedProgram=""				; Specifies programs to run concurrently with Setup
+    AdminPassword=local
+
+
+[Identification]
+    JoinWorkgroup=WORKGROUP
+;    CreateComputerAccountInDomain=Yes
+;    JoinDomain="CONTOSO"
+;    MachineObjectOU= "OU=Workstations, dc=contoso, dc=com"
+;    DomainAdmin="Contoso\Administrator"
+;    DomainAdminPassword="password"
+
+
+[UserData]
+   ComputerName=*
+   FullName="Full Name"
+   OrgName="Organization Name"
+   ProductKey="XXXXX-YYYYY-ZZZZZ-AAAAA-BBBBB"
+
+
+[Display]
+    BitsPerPel=16				; Number of colors in display
+    Xresolution=1024				; X resolution typically 1024
+    YResolution=768				; Y resolution typically 768
+    Vrefresh=60					; Vertical refresh rate
+
+
+[MassStorageDrivers]
+; Used when custom disk drivers must be specified
+; Enter the description name =Retail or OEM
+
+
+[OEMBootFiles]
+; This section is used to specify custom HALs, and also maps to the Mass Storage Device section
+
+
+[OsChooser]
+; Used by RIS Clients Only
+
+
+[Networking]
+; This section has no entries but is required to install networking in unattended installations
+
+
+[NetProtocols]
+    MS_TCPIP=params.MS_TCPIP			; Installs TCP/IP
+;    MS_TCPIP=params.MS_NWIPX			; Installs IPX
+;    MS_TCPIP=params.MS_PPTP			; Installs PPTP
+;    MS_TCPIP=params.MS_L2TP			; Installs L2TP
+;    MS_TCPIP=params.MS_AppleTalk		; Installs AppleTalk
+;    MS_TCPIP=params.MS_NetMon			; Installs Network Monitor
+;    MS_TCPIP=params.MS_ATMLANE			; Installs ATM Lane Emulation
+;    MS_TCPIP=params.MS_ATMUNI			; Installs ATM Call Manager 
+;    MS_TCPIP=params.MS_ATMArps			; Installs ATM ARP Server 
+
+[NetClients]
+    MS_MSClient=params.MS_MSClient		; Indicates MS Client Should be installed and configured
+;    MS_NWClient=params.NW_Client		; Indicates NetWare Client Should be installed and configured
+
+[NetServices]
+    MS_SERVER=params.MS_SERVER			; Install File and Print Services
+;    MS_RasSrv=params.MS_RasSrv			; Install Dial up Server
+;    MS_PSched=params.MS_PSched			; Install QOS Packet Scheduler
+;    MS_NwSapAgent=params.NwSapAgent		; Install SAP Agent
+;    MS_WLBS=params.WLBS			; Install Network Load Balance
+
+[params.MS_Client]
+;    BrowseDomains=corp, sales, research	; For SERVER only. list of domains that can be browsed
+;    NameServiceNetworkAddress=10.10.1.1	; Name Service Provider address (NCACN)
+;    NameServiceProtocol=ncacn_ip_tcp		; Specifies name service protocol (IP vs Pipes)
+
+[params.MS_Server]
+;    BroadcastsToLanman2Clients=No		; Server only - Broadcast for LANMAN 2.0
+;    Optimization=MaxThroughputForFileSharing	; Server only - Memory Optimization Setting
+
+[params.MS_WLBS]
+; Specifies information for Network Load balancing
+
+[params.MS_TCPIP]
+; Entries in this section are applied to all NICs
+
+;    DeadGWDetectDefault=NO			; RRAS boxes only - dead gateway detection
+;    DisableDynamicUpdate=No			; If Yes A and PTR records are not auto registered in DNS
+;    DNSDomain=Foo.com				; Sets the Primary DNS Suffix for the computer
+;    DNSSuffixSearchOrder=Srv1.foo.com,srv2.foo.com	; DNS Suffix Search Order
+;    DontAddDefaultGatewayDefault=Yes		; RRAS only. Yes=Use the default gateway
+;    EnableAdapterDomainNameRegistration=Yes	; Used with Disable Dynamic Update to register with DNS
+;    EnableICMPRedirect=No			; RRAS Only Wheter or not to use ICMP redirects
+;    EnableLMHosts=No				; Specifies whether or not to use LMHosts
+;    EnableSecurity=No				; Enables TCP/IP Filtering
+;    ScopeID=Foo				; Species NetBIOS scope
+    SyncDomainWithMembership=1			; Changes the Primary DNS Suffix to match the AD Domain name
+    UseDomainNameDevolution=Yes			; Enables devolution when an unqualified DNS query is sent
+    AdapterSections=params.MS_TCPIP.Adapter1	; Specifies the sub heading for config specific to the adapter
+
+[NetBindings]
+;Allows to enable, disable and demote specific bindings on specific NICs
+;Often Used with NLB to set which NICs are NLB enabled
+
+[NetAdapters]
+    Adapter1=params.Adapter1			; One entry per adapter used to identify NIC for specific settings 
+
+[params.Adapter1]
+    ConnectionName="Corporate Network"		; Specifies a name for this connection
+    INFID=*					; Adapters P&P ID. If * means match to first card found
+;    PCIBusNumber=0				; Bus Number of PCI NIC
+;    PCIDeviceNumber=11				; Device Number of PCI NIC
+;    PCIFunctionNumber=0			; Function Number of PCI NIC
+;    DMA=1					; DMA Channel Number for NIC
+;    DoNotDetectLegacyCards = *PNP030b,*PNP8132	; Non P&P cards that setup can ignore and not install	
+;    IOAddr=330					; IO Adddress of NiC
+;    IRQ = 5					; IRQ of Card
+;    MEM=0xc123456				; Memory address of Card
+;    NetCardAddress=0x123456789AB		; MAC address of NIC	
+
+[params.MS_TCPIP.Adapter1]
+    SpecificTo=Adapter1				; Maps to the NetADapters Section identies adapter specific settings
+;    DefaultGateway=10.10.1.1,10.10.1.2		; Default Gateway addresses for this adapter
+    DHCP=Yes					; Whether or not this adapter uses DHCP address	
+;    DHCPClassID=foo				; DHCP Class ID
+;    DNSDomain=Foo.com				; DNS Suffix for this adapter
+;    DNSServerSearchOrder=10.10.1.21,10.10.1.22	; Order of DNS Servers to use for this adapter
+;    IPAddress=10.10.1.24			; IP addresses for this adapter
+;    NetBIOSOptions=1				; 0=From DHCP, 1=Enable NetBIOS, 2=DisableNetBIOS
+;    SubnetMask=255.0.0.0			; Network Mask, 1 per each IP address specified
+;    WINS=No					; Whether or not to register with WINS
+;    WinsServerList=10.10.1.21,10.10.1.22	; List of WINS Servers. Wins=Yes must be set	
+
+
+[PCHealth]
+; This section is used to configure error reporting, remote assistance and Help and support center
+    ER_Display_UI = 1 				; Specifies if error reporting is enabled\displayed
+    ER_Enabled_Applications = All		; Specifies which applications to report errors on All, Listed, None
+    ER_Enable_Kernel_Errors = 1			; Determines if Kernel errors are reported
+    ER_Enable_Reporting = 1			; Determines if Errors are reported 
+    ER_Enable_Windows_Components = 1		; Determines if errors are reported for Windows Applications
+;    ER_Exclude_Exe1=Notepad			; Specifies which applications not to report errors on
+;    ER_Exclude_Exe2=Notepad			; Specifies which applications not to report errors on
+;    ER_Include_Exe1=Notepad			; Which applications to include when applications mode=listed
+;    ER_Include_Exe2=Notepad			; Which applications to include when applications mode=listed
+;    ER_Force_Queue_mode = 0			; force queue mode
+    ER_Include_MSApps = 1			; Determines if Errors in MSApps are reported
+    RA_AllowFullControl = 1			; Allows remote person to take full control when allowed
+    RA_AllowToGetHelp = 1			; Defines if Remote assistance is enabled
+    RA_AllowUnsolicited = 1			; Defines if someone with permissions can create a session
+;    RA_MaxTicketExpiry=			; Number of seconds until the remote assistance ticket expires. Default 30 days
+
+
+[TapiLocation]
+;    AreaCode=303				; Area Code for modem
+;    CountryCode=1				; Country code for modem 1=USA
+;    Dialing=Tone				; Indicates tone or pulse dialing for modem
+;    LongDistanceACcess=9			; Specifies number to dial for outside line
+
+
+[TerminalServices]
+    AllowConnections=1				; Enables Remote Desktop
+;    LicensingMode=PerSeat			; Sets terminal services licensing Mode
+    PermissionsSetting=0			; 1 sets TS permissions same as NT 4.0. 0 sets them to Win2000
+
+
+[NetOptionalComponents]
+    ACS = 0					; QoS Admission Control Service
+    DHCPServer = 0				; DHCP Server
+    DNS = 0					; DNS Server
+    DSMIGRAT = 0				; Directory Service Migration Tool
+    IAS = 0					; Internet Authentication Services
+    ILS = 0					; Internet Location Service
+    LPDSVC = 0					; TCP/IP Print Server
+    MacPrint = 0				; Print Services for Macintosh
+    MacSrv = 0					; Services for Macintosh
+    Netcm = 0					; Installs Connection Manager Admin Kit
+    NETMONTOOLS = 0				; Network Monitor tools
+    SimpTcp = 0					; Simple TCP/IP Services
+    SNMP = 0					; Simple Network Management Protocol
+    WINS = 0					; Windows Internet Name Service
+
+
+[SNMP]
+;    Accept_CommunityName = Dude:Read_WRITE	; Defines community names and rights
+;    Any_Host = Yes				; Determines if packets are allowed from any host
+;    Community_Name = ""			; Sets the community name 
+;    Contact_Name = "mattmi@dude.com"		; Defines a contact name for this machine
+;    Limit_Host = ""				; Defines specific hosts to allow packets from Max=3
+;    Location = "here"				; Defines a physical location for this machine
+;    Send_Authentication = Yes			; Determines if an Authentication trap is sent
+;    Service = Physical,Applications,Datalink,Internet,End-to-End	; determines types of services to report
+;    Traps = 					; management stations to send traps to
+
+
+[Components]
+    AccessOpt = on				; accessibility wizard
+    Calc = on					; calculator
+    CertSrv = off				; certificate services compontents of the certificate server
+    CertSrv_Client = off			; web client components of the certificate server
+    CertSrv_Server = off			; server components of the certificate server
+    CharMap = off				; enables insertion of symbols and characters into documents
+    Chat = on					; chat client
+    Clipbook = on				; clipboard viewer
+    Complusnetwork = off			; COM+ network access
+    DeskPaper = on				; desktop wallpaper
+    Dialer = on					; phone dialer
+    Dtcnetwork = off				; DTC network access
+    Fax = on					; Fax components
+    fp_extensions = off				; Front Pager Extensions
+    fp_vdir_deploy = off			; Visual Interdev RAD remote deployment	
+    freecell = off				; freecell game
+    hearts = off				; hearts game
+    hypertrm = on				; hyperterm
+    IEAccess = on				; installs visible entry points (shortcuts) for IE
+    IEHardenAdmin = off				; harden IE for administrators, power users
+    IEHardenUser = off				; harden IE for users
+    Iis_Common = off				; common set of files needed by internet information services 
+    Iis_Ftp = off				; ftp service
+    Iis_Htmla = off				; html based administration tools for iis
+    Iis_Inetmgr = off				; microsoft management console based administration tools for iis
+    iis_nntp = off				; NNTP server.
+    iis_nntp_docs = off				; NNTP server docs.
+    iis_pwmgr = off				; personal web manager, valid only for w2k professional
+    iis_smtp = off				; SMTP server.
+    iis_smtp_docs = off				; SMTP server docs.
+    iis_www = off				; www service 
+    iis_www_vdir_printers = off			; Web printing components
+    iis_www_vdir_terminalService = off		; Installs terminal Services Active X control into the virtual directory
+    IisDbg = on					; script debugger
+    indexsrv_system = off			; indexing services, requires iis_common, iis_inetmgr, iis_www and com = on
+    inetprint = off				; internet printing, requires iis_common, iis_inetmgr, and iis_www
+    LicenseServer = off				; Disable Terminal Services licensing.
+    media_clips = on				; Sample Sounds
+    Media_Utopia = on				; utopia sound scheme
+    minesweeper = off				; game
+    mousepoint = off				; mouse pointers
+    Mplay = on					; Windows media player
+    msmq_ADIntegrated = off			; Integrates MSMQ into AD
+    msmq_Core = off				; MSMQ core components
+    msmq_HTTPSupport = off			; Enables MSMQ to use HTTP
+    msmq_LocalStorage = off			; Allows messages to be stored locally
+    msmq_MQDSService = off			; Provides AD and site recognition
+    msmq_RoutingSupport = off			; Provides MSMQ routing
+    msmq_TriggerService = off			; associates message arrival with com objects
+    msnexplr = off				; Installs MSN Explorer
+    MsWordPad = on				; Word Pad
+    NetCis = off				; microsoft com internet services, requires iis_common, iis_inetmgr, iis_www and com = on
+    NetOc = on					; additional optional networking components, requires [NetOptionalComponents] section
+    ObjectPkg = off				; object packager
+    OEAccess = off				; hide Outlook Express icons
+    Paint = on					; MS Paint
+    pinball = off				; game
+    rec = on					; sound recorder
+    reminst = off				; remote installation services
+    rootautoupdate = on				; OCM update root certificates
+    RStorage = off				; remote storage services enable the use of tape libraries as extensions of ntfs volumes
+    solitaire = off				; Solitaire game
+    spider = off				; spider game
+    Templates = on				; document templates
+    TerminalServer = off			; Installs Terminal Services on SERVERs only
+    TsClients = off				; if TsEnable = On then tsClient files for creating client disks, appx 10MB
+    TsWebClient = off				; Installs the ActiveX component for terminal services. requires IIS
+    vol = on					; volume control
+    wmaccess = on				; show Windows Messenger shortcuts
+    wmPOCM = on					; show Windows Media Player shortcuts
+    Wms = off					; windows media technologies components
+    Wms_Admin_asp = off				; windows media technologies server administration tools web components
+    wms_admin_mmc=off				; Windows Media MMC snap in
+    Wms_Server = off				; windows media technologies server, requires Wms_Admin
+    zonegames = off				; Installs MS Game Zone internet games
+
+
+[Proxy]
+;    FTP_Proxy_Server="Http://Myproxy:80"
+;    Gopher_Proxy_Server="Http://Myproxy:80"
+;    HTTP_Proxy_Server="Http://Myproxy:80"
+    Proxy_Enable=1	
+;    Proxy_Override=<local>
+;    Secure_Proxy_Server="Http://Myproxy:80"
+;    Socks_Proxy_Server="Http://Myproxy:80"
+    Use_Same_Proxy=1
+
+
+[URL]
+    AutoConfig=0				; 1 indicates browser to be configured from a server
+;    AutoConfigJSURL=http://			; URL for Javascript file that configures proxy settings
+;    AutoConfigURL=Http://			; URL for an INS file that configures proxy settings
+;    Help_Page=Http://				; URL for help page
+    Home_Page = http://www.Microsoft.com
+;    Quick_Link_1_Name="Foo Page"		; Name fo quick link 1
+;    Quick_Link_1="http:"			; URL of quick link 1
+
+
+[Branding]
+    BrandIEUsingUnattended = Yes		; Tells IE to accept entries during unattended install
+;    IEBrandingFile=IEAK.INS			; IE to use the specified IEAK branding file in $OEM$
+
+
+[FavoritesEx]
+    Title1="MSDN.url"				; URL Name for first Favorite (BrandingIEUSingUnattended must =Yes)
+    URL1="http://MSDN.Microsoft.com"		; URL matching first favorite name
+    Title2="Support.url"			; URL Name for 2nd Favorite (BrandingIEUSingUnattended must =Yes)
+    URL2="http://support.Microsoft.com"		; URL matching 2nd favorite name
+
+
+[IEHardening]
+;    LocalIntranetSites=http://www.contoso.com;http://local.contoso.com
+;    TrustedSites=http://www.microsoft.com
+
+
+[IEPopupBlocker]
+;    AllowedSites=http://www.contoso.com;http://www.microsoft.com
+    BlockPopups = yes
+    FilterLevel = Medium
+    ShowInformationBar = Yes
+
+
+[Fax]
+    ArchiveIncoming=True			; Saves inbound faxes
+;    ArchiveIncomingFolderName=			; Location to save inbound fax
+    ArchiveOutgoing=True			; Saves outbound faxes
+;    ArchiveOutgoingFolderName=			; Location to save outbound fax
+    Csid=Fax					; Called Subscriber ID transmitted during faxes
+; A bunch more Fax entries are availabe see documentation    
+
+
+[Shell]
+    DefaultStartPanelOff = no			; No = use XP start panel, Yes= Use classic windows with icons on desktop
+    DefaultThemesOff = no			; No means use XP Themes Yes means us Windows Classic themes
+;    CustomDefaultThemeFile=c:\windows\Resources\Themes\Mytheme.theme	; Used to specify a different default theme. Use to set Screen Saver and wallpaper
+
+
+[HomeNet]
+;    InternetConnectionFirewall=Adapter1	; specify the name from netadapters where you want this enabled
+
+
+[Certsrv_Client]
+; Can contain information for client side certificatses
+
+
+[CertSrv_Server]
+; Can contain information on configuring Certificate Services on server
+
+
+[InternetServer]
+;    PathFTPRoot="C:\Inetpub\FTPRoot"		; Path for FTP
+;    PAthWWWRoot="C:\Inetpub\WWWRoot"		; Path for WWW
+
+
+[RemoteInstall]
+; This section for RIS installs only
+;    Repartition=Yes				; Delete all partitions and reformat with NTFS
+;    UseWholeDisk=Yes				; Extends volume to whole drive
+
+
+[SystemFileProtection]
+;    SFCDllCacheDir=				; Location of folder used by Windows File Protection
+;    SFCShowProgress=1				; Display progress meter during scans
+;    SFCQuota=					; Size of DLL Cache 
+
+
+[SystemRestore]
+    CheckpointCalendarFrequency = 1		; Number of days for Auto System Checkpoints or restore points created
+    CheckpointSessionFrequency = 10		; Number of hours after which checkpoint is created
+    MaximumDataStorePercentOfDisk = 12		; Max % of hard disk to user for system restore data store
+    RestorePointLife=30				; Max Age  in days before a restore point is purged from database 
+
+
+[Win9xUpg]
+; This section can contain entries related to upgrading from Win9x		
+

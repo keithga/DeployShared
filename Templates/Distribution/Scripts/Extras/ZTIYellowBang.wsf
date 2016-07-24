@@ -1,0 +1,175 @@
+<job id="ZTIYellowBang">
+	<script language="VBScript" src="..\ZTIUtility.vbs"/>
+	<script language="VBScript">
+
+' // ***************************************************************************
+' // 
+' // Copyright (c) Microsoft Corporation.  All rights reserved.
+' // 
+' // Microsoft Deployment Toolkit Extensions http://MDTEx.codeplex.com
+' //
+' // File:      ZTIYellowBang.wsf
+' // 
+' // Version:   6.2.5019.x
+' // 
+' // Purpose:   Log all devices that do not have a working driver.
+' //            This script is only for Windows Vista, Windows 7 and Sever 2008.
+' // 
+' //    WARNING: THE LOG FILE OUTPUT FROM THIS SCRIPT IS HUGE!!!
+' // 
+' // Usage:     cscript.exe [//nologo] ZTIYellowBang.wsf [/debug:true]
+' // 
+' // ***************************************************************************
+
+Option Explicit
+RunNewInstance
+
+Class ZTIYellowBang
+
+	Function Main
+	
+		Dim PnPID
+		Dim oDevice
+		Dim oDrivers
+		Dim oDriver
+		Dim bFound
+
+		Dim sLog
+
+		set oDrivers = objWMI.ExecQuery("SELECT * FROM Win32_PnPSignedDriver")
+
+		
+		for each oDevice in objWMI.ExecQuery("SELECT * FROM Win32_PnPEntity")
+
+			If isarray(oDevice.HardwareID) then
+				PnPID = oDevice.HardwareID(0)
+			Else
+				PnPID = oDevice.DeviceID
+			End if
+
+			sLog =        "DRIVER_STATUS [" & GetErrCode(oDevice.ConfigManagerErrorCode) & "]    DeviceID [" & PnpID & "]"
+
+			If oDevice.ConfigManagerErrorCode <> 0 then
+
+				oLogging.CreateEntry "NODRIV DeviceID [" & PnpID & "] [" & GetErrCode(oDevice.ConfigManagerErrorCode) & "] Device: " & DumpInfo(oDevice), LogTypeInfo
+
+			Else
+
+				bFound = false
+				for each oDriver in array("STORAGE\","ROOT\","MONITOR\", "IDE\","HDAUDIO\","BTH\","USBSTOR\")
+					if ucase(left(PnPID,len(oDriver))) = oDriver then
+						bFound = True
+						exit for
+					End if
+				next
+
+				If not bFound then
+					for each oDriver in oDrivers
+
+						If ucase(oDriver.DeviceID) = ucase(oDevice.DeviceID) then
+							If oDriver.IsSigned and oDriver.Signer = "Microsoft Windows" then
+								oLogging.CreateEntry "INBOX  DeviceID [" & PnpID & "] Device: [" & DumpInfo(oDevice) & "] Driver: [" &  DumpInfo(oDriver) & "] GUID:[" & oDevice.ClassGUID & "]", LogTypeInfo
+							ElseIf oDriver.IsSigned then
+								oLogging.CreateEntry "3RDSIGN DeviceID [" & PnpID & "] Device: [" & DumpInfo(oDevice) & "] Driver: [" &  DumpInfo(oDriver) & "] GUID:[" & oDevice.ClassGUID & "]", LogTypeInfo
+							Else
+								oLogging.CreateEntry "UNSIGNED Device [" & PnpID & "] Device: [" & DumpInfo(oDevice) & "] Driver: [" &  DumpInfo(oDriver) & "] GUID:[" & oDevice.ClassGUID & "]", LogTypeInfo
+							End if 
+							bFOund = true
+							exit for
+						End if
+
+					next
+				End if
+
+				If not bFound then
+
+					oLogging.CreateEntry "MISSING [" & GetErrCode(oDevice.ConfigManagerErrorCode) & "]    DeviceID [" & PnpID & "] Device: " & DumpInfo(oDevice), LogTypewarning
+
+				End if 
+
+			End if
+
+		next
+		
+		Main = SUCCESS
+	
+	End Function
+
+	Function DumpInfo ( oWMIObject )
+
+		Dim oProperty
+
+		for each oProperty in oWMIObject.Properties_
+			select case( oProperty.Name) 
+				case "Signer", "IsSigned", "DriverDate", "DriverVersion", "DriverProviderName", "Description", "Manufacturer", "DeviceID"
+					DumpInfo = DumpInfo & vbTab & oProperty.Name & "=" & oProperty.Value
+				case "CompatibleID", "HardwareID"
+					DumpInfo = DumpInfo & vbTab & oProperty.Name & "=" & CreateCSVFromObject(oProperty.Value)
+			end select
+		next
+
+	End function
+
+	Function CreateCSVFromObject ( oArray )
+
+		Dim Value
+		Dim Result
+		If isObject(oArray) or isArray(oArray) then
+			For Each Value in oArray
+				Result = Result & Value
+				If len(Result) > 0 then
+					Result = Result & ", "
+				End if
+			Next
+		End if
+		CreateCSVFromObject = Result
+
+	End function
+	
+	Function GetErrCode( iErrorCode ) 
+	
+		Select Case iErrorCode
+			Case 0     GetErrCode = "Device is working properly." 
+			Case 1     GetErrCode = "Device is not configured correctly." 
+			Case 2     GetErrCode = "Windows cannot load the driver for this device." 
+			Case 3     GetErrCode = "Driver for this device might be corrupted, or the system may be low on memory or other resources." 
+			Case 4     GetErrCode = "Device is not working properly. One of its drivers or the registry might be corrupted." 
+			Case 5     GetErrCode = "Driver for the device requires a resource that Windows cannot manage." 
+			Case 6     GetErrCode = "Boot configuration for the device conflicts with other devices." 
+			Case 7     GetErrCode = "Cannot filter." 
+			Case 8     GetErrCode = "Driver loader for the device is missing." 
+			Case 9     GetErrCode = "Device is not working properly. The controlling firmware is incorrectly reporting the resources for the device." 
+			Case 10    GetErrCode = "Device cannot start." 
+			Case 11    GetErrCode = "Device failed." 
+			Case 12    GetErrCode = "Device cannot find enough free resources to use." 
+			Case 13    GetErrCode = "Windows cannot verify the device's resources." 
+			Case 14    GetErrCode = "Device cannot work properly until the computer is restarted." 
+			Case 15    GetErrCode = "Device is not working properly due to a possible re-enumeration problem." 
+			Case 16    GetErrCode = "Windows cannot identify all of the resources that the device uses." 
+			Case 17    GetErrCode = "Device is requesting an unknown resource type." 
+			Case 18    GetErrCode = "Device drivers must be reinstalled." 
+			Case 19    GetErrCode = "Failure using the VxD loader." 
+			Case 20    GetErrCode = "Registry might be corrupted." 
+			Case 21    GetErrCode = "System failure. If changing the device driver is ineffective, see the hardware documentation. Windows is removing the device." 
+			Case 22    GetErrCode = "Device is disabled." 
+			Case 23    GetErrCode = "System failure. If changing the device driver is ineffective, see the hardware documentation." 
+			Case 24    GetErrCode = "Device is not present, not working properly, or does not have all of its drivers installed." 
+			Case 25    GetErrCode = "Windows is still setting up the device." 
+			Case 26    GetErrCode = "Windows is still setting up the device." 
+			Case 27    GetErrCode = "Device does not have valid log configuration." 
+			Case 28    GetErrCode = "Device drivers are not installed." 
+			Case 29    GetErrCode = "Device is disabled. The device firmware did not provide the required resources." 
+			Case 30    GetErrCode = "Device is using an IRQ resource that another device is using." 
+			Case 31    GetErrCode = "Device is not working properly. Windows cannot load the required device drivers." 
+			Case else  GetErrCode = "Unknown Error"
+		End Select
+		
+		GetErrCode = oLogging.FormatError(iErrorCode) & ": " & GetErrCode
+	
+	End function
+
+
+End class
+
+	</script>
+</job>

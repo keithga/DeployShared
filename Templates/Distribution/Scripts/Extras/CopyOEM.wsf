@@ -1,0 +1,63 @@
+<job id="CopyOEM">
+	<script language="VBScript" src="..\ZTIDiskUtility.vbs"/>
+	<script language="VBScript" src="..\ZTIUtility.vbs"/>
+	<script language="VBScript">
+
+' // ***************************************************************************
+' // 
+' // File:      CopyOEM.wsf
+' // 
+' // Author:    Michael Niehaus
+' // 
+' // Version:   1.0
+' // 
+' // Purpose:   Copy $OEM$\$1 and $OEM$\$$ files to the current OS.  This script
+' //            is designed to run in Windows PE right after the "Install OS" 
+' //            step.
+' // 
+' // Usage:     cscript CopyOEM.wsf [/debug:true]
+' // 
+' // ***************************************************************************
+
+' ------------- DISCLAIMER ------------------------------------------------- 
+' This script code is provided as is with no guarantee or waranty concerning 
+' the usability or impact on systems and may be used, distributed, and 
+' modified in any way provided the parties agree and acknowledge the 
+' Microsoft or Microsoft Partners have neither accountabilty or 
+' responsibility for results produced by use of this script. 
+' 
+' Microsoft will not provide any support through any means. 
+' ------------- DISCLAIMER ------------------------------------------------- 
+
+	Dim sOEM, sDestinationDrive
+
+
+	' Find the OEM path
+
+	If oFSO.FolderExists(oEnvironment.Item("DeployRoot") & "\Control\" & oEnvironment.Item("TaskSequenceID") & "\$OEM$") then
+		sOEM = oEnvironment.Item("DeployRoot") & "\Control\" & oEnvironment.Item("TaskSequenceID") & "\$OEM$"
+	ElseIf oFSO.FolderExists(oEnvironment.Item("SourcePath") & "\$OEM$") then
+		sOEM = oEnvironment.Item("SourcePath") & "\$OEM$"
+	ElseIf oFSO.FolderExists(oEnvironment.Item("DeployRoot") & "\" & oEnvironment.Item("Architecture") & "\$OEM$") then
+		sOEM = oEnvironment.Item("DeployRoot") & "\" & oEnvironment.Item("Architecture") & "\$OEM$"
+	ElseIf oFSO.FolderExists(oEnvironment.Item("DeployRoot") & "\$OEM$") then
+		sOEM = oEnvironment.Item("DeployRoot") & "\$OEM$"
+	Else
+		sOEM = ""
+	End if
+
+
+	' Copy the OEM content ($1, $$) to the right place
+
+	sDestinationDrive = oUtility.GetOSTargetDriveLetter
+	If oFSO.FolderExists(sOEM & "\$1") then
+		oLogging.CreateEntry "Copying from " & sOEM & "\$1 to " & sDestinationDrive, LogTypeInfo
+		oFSO.CopyFolder sOEM & "\$1", sDestinationDrive, true
+	End if
+	If oFSO.FolderExists(sOEM & "\$$") then
+		oLogging.CreateEntry "Copying from " & sOEM & "\$$ to " & sDestinationDrive & "\Windows", LogTypeInfo
+		oFSO.CopyFolder sOEM & "\$$", sDestinationDrive & "\Windows", true
+	End if
+
+	</script>
+</job>

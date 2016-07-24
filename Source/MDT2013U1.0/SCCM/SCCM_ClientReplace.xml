@@ -1,0 +1,265 @@
+<?xml version="1.0"?>
+<SmsTaskSequencePackage xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <BootImageID>CEN00006</BootImageID>
+  <Category>Microsoft Deployment Toolkit</Category>
+  <DependentProgram />
+  <Description />
+  <Duration>0</Duration>
+  <Name>Client Replace Task Sequence</Name>
+  <ProgramFlags>152084496</ProgramFlags>
+  <SequenceData>
+    <sequence version="3.00">
+      <referenceList>
+        <reference package="CEN00005" />
+        <reference package="CEN0001A" />
+        <reference package="CEN00004" />
+      </referenceList>
+      <globalVarList>
+        <variable name="OSDStateSMPRetryCount" property="SMPRetryCount">3</variable>
+        <variable name="OSDStateSMPRetryTime" property="SMPRetryTime">10</variable>
+      </globalVarList>
+      <group name="Execute Task Sequence" description="" continueOnError="true">
+        <step type="BDD_UsePackage" name="Use Toolkit Package" description="" runIn="WinPEandFullOS" successCodeList="0">
+          <action>smsswd.exe /run:CEN00005 cscript.exe Scripts\ZTISCCM.wsf</action>
+          <defaultVarList>
+            <variable name="BDDPackageID" property="PackageID" hidden="true">CEN00005</variable>
+          </defaultVarList>
+        </step>
+        <step type="SMS_TaskSequence_SetVariableAction" name="Set DeploymentType to REPLACE" description="" runIn="WinPEandFullOS" successCodeList="0">
+          <action>tsenv.exe "DeploymentType=REPLACE"</action>
+          <defaultVarList>
+            <variable name="VariableName" property="VariableName" hidden="true">DeploymentType</variable>
+            <variable name="VariableValue" property="VariableValue" hidden="true">REPLACE</variable>
+          </defaultVarList>
+        </step>
+        <step type="BDD_Gather" name="Gather" description="" runIn="WinPEandFullOS" successCodeList="0">
+          <action>smsswd.exe /run:CEN0001A cscript.exe "%DeployRoot%\Scripts\ZTIGather.wsf"</action>
+          <defaultVarList>
+            <variable name="GatherLocalOnly" property="GatherLocalOnly">false</variable>
+            <variable name="PackageID" property="PackageID" hidden="true">CEN0001A</variable>
+            <variable name="RulesFile" property="RulesFile">CustomSettings.ini</variable>
+          </defaultVarList>
+        </step>
+        <step type="SMS_TaskSequence_RequestStateStoreAction" name="Request State Store" description="" runIn="FullOS" successCodeList="0">
+          <condition>
+            <expression type="SMS_TaskSequence_VariableConditionExpression">
+              <variable name="Operator">notExists</variable>
+              <variable name="Value">
+              </variable>
+              <variable name="Variable">OSDStateStorePath</variable>
+            </expression>
+          </condition>
+          <action>osdsmpclient.exe /capture</action>
+          <defaultVarList>
+            <variable name="OSDStateFallbackToNAA" property="FallbackToNAA">true</variable>
+            <variable name="OSDStateRequestType" property="RequestType" hidden="true">capture</variable>
+            <variable name="OSDStateSMPRetryCount" property="SMPRetryCount" hidden="true">3</variable>
+            <variable name="OSDStateSMPRetryTime" property="SMPRetryTime" hidden="true">10</variable>
+          </defaultVarList>
+        </step>
+        <step type="SMS_TaskSequence_CaptureUserStateAction" name="Capture User State" description="" runIn="FullOS" successCodeList="0">
+          <action>osdmigrateuserstate.exe /collect /continueOnError:%OSDMigrateContinueOnLockedFiles% /skipefs:%OSDMigrateSkipEncryptedFiles%</action>
+          <defaultVarList>
+            <variable name="OSDMigrateContinueOnLockedFiles" property="ContinueOnLockedFiles">true</variable>
+            <variable name="OSDMigrateEnableVerboseLogging" property="EnableVerboseLogging">false</variable>
+            <variable name="OSDMigrateMode" property="Mode">Simple</variable>
+            <variable name="OSDMigrateSkipEncryptedFiles" property="SkipEncryptedFiles">false</variable>
+            <variable name="_OSDMigrateUsmtPackageID" property="UsmtPackageID">CEN00004</variable>
+          </defaultVarList>
+        </step>
+        <group name="Backup Computer" description="">
+          <step type="SMS_TaskSequence_DisableBitLockerAction" name="Disable BitLocker" description="" continueOnError="true" runIn="FullOS" successCodeList="0">
+            <condition>
+              <expression type="SMS_TaskSequence_VariableConditionExpression">
+                <variable name="Operator">greaterEqual</variable>
+                <variable name="Value">6</variable>
+                <variable name="Variable">OSCurrentVersion</variable>
+              </expression>
+            </condition>
+            <action>OSDBitLocker.exe /disable </action>
+            <defaultVarList />
+          </step>
+          <step type="SMS_TaskSequence_RebootAction" name="Restart Computer" description="" runIn="WinPEandFullOS" successCodeList="0">
+            <action>smsboot.exe /target:WinPE</action>
+            <defaultVarList>
+              <variable name="SMSRebootMessage" property="Message">Your computer must be restarted so that a backup may be performed.</variable>
+              <variable name="SMSRebootTimeout" property="MessageTimeout">60</variable>
+              <variable name="SMSRebootTarget" property="Target" hidden="true">WinPE</variable>
+            </defaultVarList>
+          </step>
+          <step type="BDD_UsePackage" name="Use Toolkit Package" description="" runIn="WinPEandFullOS" successCodeList="0">
+            <condition>
+              <operator type="not">
+                <expression type="SMS_TaskSequence_FolderConditionExpression">
+                  <variable name="Path">%ScriptRoot%</variable>
+                </expression>
+              </operator>
+            </condition>
+            <action>smsswd.exe /run:CEN00005 cscript.exe Scripts\ZTISCCM.wsf</action>
+            <defaultVarList>
+              <variable name="BDDPackageID" property="PackageID" hidden="true">CEN00005</variable>
+            </defaultVarList>
+          </step>
+          <step type="BDD_Gather" name="Gather" description="" runIn="WinPEandFullOS" successCodeList="0">
+            <action>smsswd.exe /run:CEN0001A cscript.exe "%DeployRoot%\Scripts\ZTIGather.wsf"</action>
+            <defaultVarList>
+              <variable name="GatherLocalOnly" property="GatherLocalOnly">true</variable>
+              <variable name="PackageID" property="PackageID" hidden="true">CEN0001A</variable>
+              <variable name="RulesFile" property="RulesFile">CustomSettings.ini</variable>
+            </defaultVarList>
+          </step>
+          <step type="SMS_TaskSequence_RunCommandLineAction" name="Backup" description="" runIn="WinPEandFullOS" successCodeList="0 3010">
+            <condition>
+              <expression type="SMS_TaskSequence_VariableConditionExpression">
+                <variable name="Operator">notEquals</variable>
+                <variable name="Value">NONE</variable>
+                <variable name="Variable">ComputerBackupLocation</variable>
+              </expression>
+            </condition>
+            <action>smsswd.exe /run: cscript.exe "%deployroot%\scripts\ztibackup.wsf"</action>
+            <defaultVarList>
+              <variable name="CommandLine" property="CommandLine" hidden="true">cscript.exe "%deployroot%\scripts\ztibackup.wsf"</variable>
+              <variable name="SMSTSDisableWow64Redirection" property="DisableWow64Redirection">false</variable>
+              <variable name="SuccessCodes" property="SuccessCodes" hidden="true">0 3010</variable>
+            </defaultVarList>
+          </step>
+          <step type="SMS_TaskSequence_RebootAction" name="Restart Computer" description="" runIn="WinPEandFullOS" successCodeList="0">
+            <action>smsboot.exe /target:HD</action>
+            <defaultVarList>
+              <variable name="SMSRebootMessage" property="Message">Rebooting back to the full OS to release the state store.</variable>
+              <variable name="SMSRebootTimeout" property="MessageTimeout">1</variable>
+              <variable name="SMSRebootTarget" property="Target" hidden="true">HD</variable>
+            </defaultVarList>
+          </step>
+          <step type="BDD_UsePackage" name="Use Toolkit Package" description="" runIn="WinPEandFullOS" successCodeList="0">
+            <condition>
+              <operator type="not">
+                <expression type="SMS_TaskSequence_FolderConditionExpression">
+                  <variable name="Path">%ScriptRoot%</variable>
+                </expression>
+              </operator>
+            </condition>
+            <action>smsswd.exe /run:CEN00005 cscript.exe Scripts\ZTISCCM.wsf</action>
+            <defaultVarList>
+              <variable name="BDDPackageID" property="PackageID" hidden="true">CEN00005</variable>
+            </defaultVarList>
+          </step>
+        </group>
+        <step type="SMS_TaskSequence_ReleaseStateStoreAction" name="Release State Store" description="" continueOnError="true" runIn="FullOS" successCodeList="0">
+          <action>osdsmpclient.exe /release</action>
+          <defaultVarList />
+        </step>
+        <step type="SMS_TaskSequence_RunCommandLineAction" name="Copy Logs" description="" runIn="WinPEandFullOS" successCodeList="0 3010">
+          <action>smsswd.exe /run: cscript "%deployroot%\scripts\zticopylogs.wsf"</action>
+          <defaultVarList>
+            <variable name="CommandLine" property="CommandLine" hidden="true">cscript "%deployroot%\scripts\zticopylogs.wsf"</variable>
+            <variable name="SMSTSDisableWow64Redirection" property="DisableWow64Redirection">false</variable>
+            <variable name="SuccessCodes" property="SuccessCodes" hidden="true">0 3010</variable>
+          </defaultVarList>
+        </step>
+        <group name="Clean Disk" description="">
+          <condition>
+            <expression type="SMS_TaskSequence_VariableConditionExpression">
+              <variable name="Operator">equals</variable>
+              <variable name="Value">TRUE</variable>
+              <variable name="Variable">WipeDisk</variable>
+            </expression>
+          </condition>
+          <step type="SMS_TaskSequence_RebootAction" name="Restart Computer" description="" runIn="WinPEandFullOS" successCodeList="0">
+            <action>smsboot.exe /target:WinPE</action>
+            <defaultVarList>
+              <variable name="SMSRebootMessage" property="Message">The computer will restart into Windows PE so the hard drive can be cleaned.</variable>
+              <variable name="SMSRebootTimeout" property="MessageTimeout">5</variable>
+              <variable name="SMSRebootTarget" property="Target" hidden="true">WinPE</variable>
+            </defaultVarList>
+          </step>
+          <step type="BDD_UsePackage" name="Use Toolkit Package" description="" runIn="WinPEandFullOS" successCodeList="0">
+            <condition>
+              <operator type="not">
+                <expression type="SMS_TaskSequence_FolderConditionExpression">
+                  <variable name="Path">%ScriptRoot%</variable>
+                </expression>
+              </operator>
+            </condition>
+            <action>smsswd.exe /run:CEN00005 cscript.exe Scripts\ZTISCCM.wsf</action>
+            <defaultVarList>
+              <variable name="BDDPackageID" property="PackageID" hidden="true">CEN00005</variable>
+            </defaultVarList>
+          </step>
+          <step type="BDD_Gather" name="Gather" description="" runIn="WinPEandFullOS" successCodeList="0">
+            <action>smsswd.exe /run:CEN0001A cscript.exe "%DeployRoot%\Scripts\ZTIGather.wsf"</action>
+            <defaultVarList>
+              <variable name="GatherLocalOnly" property="GatherLocalOnly">true</variable>
+              <variable name="PackageID" property="PackageID" hidden="true">CEN0001A</variable>
+              <variable name="RulesFile" property="RulesFile">CustomSettings.ini</variable>
+            </defaultVarList>
+          </step>
+          <step type="SMS_TaskSequence_RunCommandLineAction" name="Clean Disk" description="This task will find the first logical drive, format it, and run cipher.exe to zero out the empty space" runIn="WinPEandFullOS" successCodeList="0 3010">
+            <action>smsswd.exe /run: cscript.exe "%deployroot%\scripts\ztiwipedisk.wsf"</action>
+            <defaultVarList>
+              <variable name="CommandLine" property="CommandLine" hidden="true">cscript.exe "%deployroot%\scripts\ztiwipedisk.wsf"</variable>
+              <variable name="SMSTSDisableWow64Redirection" property="DisableWow64Redirection">false</variable>
+              <variable name="SuccessCodes" property="SuccessCodes" hidden="true">0 3010</variable>
+            </defaultVarList>
+          </step>
+        </group>
+      </group>
+      <group name="Gather Logs on Failure" description="">
+        <condition>
+          <expression type="SMS_TaskSequence_VariableConditionExpression">
+            <variable name="Operator">equals</variable>
+            <variable name="Value">false</variable>
+            <variable name="Variable">_SMSTSLastActionSucceeded</variable>
+          </expression>
+        </condition>
+        <step type="SMS_TaskSequence_SetVariableAction" name="Set Error Code" description="" runIn="WinPEandFullOS" successCodeList="0">
+          <action>tsenv.exe "ErrorReturnCode=%_SMSTSLastActionRetCode%"</action>
+          <defaultVarList>
+            <variable name="VariableName" property="VariableName" hidden="true">ErrorReturnCode</variable>
+            <variable name="VariableValue" property="VariableValue" hidden="true">%_SMSTSLastActionRetCode%</variable>
+          </defaultVarList>
+        </step>
+        <step type="BDD_UsePackage" name="Use Toolkit Package" description="" runIn="WinPEandFullOS" successCodeList="0">
+          <condition>
+            <operator type="not">
+              <expression type="SMS_TaskSequence_FolderConditionExpression">
+                <variable name="Path">%ScriptRoot%</variable>
+              </expression>
+            </operator>
+          </condition>
+          <action>smsswd.exe /run:CEN00005 cscript.exe Scripts\ZTISCCM.wsf</action>
+          <defaultVarList>
+            <variable name="BDDPackageID" property="PackageID" hidden="true">CEN00005</variable>
+          </defaultVarList>
+        </step>
+        <step type="BDD_Gather" name="Gather" description="" runIn="WinPEandFullOS" successCodeList="0">
+          <action>smsswd.exe /run:CEN0001A cscript.exe "%DeployRoot%\Scripts\ZTIGather.wsf"</action>
+          <defaultVarList>
+            <variable name="GatherLocalOnly" property="GatherLocalOnly">false</variable>
+            <variable name="PackageID" property="PackageID" hidden="true">CEN0001A</variable>
+            <variable name="RulesFile" property="RulesFile">CustomSettings.ini</variable>
+          </defaultVarList>
+        </step>
+        <step type="SMS_TaskSequence_RunCommandLineAction" name="Copy Logs" description="" runIn="WinPEandFullOS" successCodeList="0 3010">
+          <action>smsswd.exe /run: cscript "%deployroot%\scripts\zticopylogs.wsf"</action>
+          <defaultVarList>
+            <variable name="CommandLine" property="CommandLine" hidden="true">cscript "%deployroot%\scripts\zticopylogs.wsf"</variable>
+            <variable name="SMSTSDisableWow64Redirection" property="DisableWow64Redirection">false</variable>
+            <variable name="SuccessCodes" property="SuccessCodes" hidden="true">0 3010</variable>
+          </defaultVarList>
+        </step>
+        <step type="SMS_TaskSequence_RunCommandLineAction" name="Error in the task sequence" description="" runIn="WinPEandFullOS" successCodeList="0">
+          <action>smsswd.exe /run: cscript "%deployroot%\scripts\ztierrormsg.wsf"</action>
+          <defaultVarList>
+            <variable name="CommandLine" property="CommandLine" hidden="true">cscript "%deployroot%\scripts\ztierrormsg.wsf"</variable>
+            <variable name="SMSTSDisableWow64Redirection" property="DisableWow64Redirection">false</variable>
+            <variable name="SuccessCodes" property="SuccessCodes" hidden="true">0</variable>
+          </defaultVarList>
+        </step>
+      </group>
+    </sequence>
+  </SequenceData>
+  <SourceDate>2010-04-27T11:17:51</SourceDate>
+  <SupportedOperatingSystems />
+  <IconSize>0</IconSize>
+</SmsTaskSequencePackage>

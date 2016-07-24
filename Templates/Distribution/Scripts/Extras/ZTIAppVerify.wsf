@@ -1,0 +1,217 @@
+<job id="ZTIAppVerify">
+	<script language="VBScript" src="..\ZTIUtility.vbs"/>
+	<script language="VBScript" src="..\ZTIConfigFile.vbs"/>
+	<script language="VBScript">
+
+' // ***************************************************************************
+' // 
+' // Copyright (c) Microsoft Corporation.  All rights reserved.
+' // 
+' // Microsoft Deployment Toolkit Extensions http://MDTEx.codeplex.com
+' //
+' // File:      ZTIApplications.wsf
+' // 
+' // Version:   6.2.5019.x
+' // 
+' // Purpose:   List the applications installed (as they would appear in "Add or Remove Programs")
+' // 
+' // Usage:     cscript.exe [//nologo] ZTIApplications.wsf [/debug:true]
+' // 
+' // ***************************************************************************
+
+Option Explicit
+RunNewInstance
+
+
+'//----------------------------------------------------------------------------
+'//  Main Class
+'//----------------------------------------------------------------------------
+
+Class ZTIAppVerify
+
+	Function GetRegRoot ( sPath )
+
+		GetRegRoot = &H80000002 ' HKLM HKEY_LOCAL_MACHINE
+		If instr(1,sPath,"\",vbTextCompare) > 1 then
+			Select case uCase(mid(sPath,1,instr(1,sPath,"\",vbTextCompare)-1))
+				case "HKEY_CLASSES_ROOT", "HKCR"
+					GetRegRoot = &h80000000
+				case "HKEY_CURRENT_USER", "HKCU"
+					GetRegRoot = &h80000001
+				case "HKEY_USERS", "HKU"
+					GetRegRoot = &h80000003
+				case "HKEY_CURRENT_CONFIG", "HKCC"
+					GetRegRoot = &h80000005
+			End Select
+		End if
+
+	End Function
+
+	Function GetRegKey ( sPath )
+
+		GetRegKey = sPath
+		If instr(1,sPath,"\",vbTextCompare) > 1 and mid(sPath,1,1) = "H" then
+			GetRegKey = mid(sPath, instr(1,sPath,"\",vbTextCompare)+1)
+		End if
+	End Function
+
+	Function GetRegSubKeys( sRegPath )
+
+		Dim arrSubKeys
+		DIm iResult
+
+		GetRegSubKeys = array()
+		If GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv").EnumKey( GetRegRoot(sRegPath) , GetRegKey(sRegPath), arrSubKeys) = 0 then
+			If isArray(arrSubKeys) then
+				GetRegSubKeys = arrSubKeys
+			End if
+		End if
+
+	End Function
+		
+	Function GetRegSubValues( sRegPath )
+
+		Dim arrSubValues
+		Dim arrSubTypes
+
+		GetRegSubValues = array()
+		If GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv").EnumValues( GetRegRoot(sRegPath) , GetRegKey(sRegPath), arrSubValues, arrSubTypes) = 0 then
+			If isArray(arrSubValues) then
+				GetRegSubValues = arrSubValues
+			End if
+		end if
+
+	End Function
+
+	dim i
+
+	Function ParseUninstallItem ( sRoot, sKey )
+		Dim sValue
+
+		if oUtility.RegReadEx(sKey + "\SystemComponent",false) = 1 then
+			' Do not display system components
+		elseif oUtility.RegReadEx(sKey + "\UninstallString", false) = "" then
+			' do not display components that can't be uninstalled.
+		elseif oUtility.RegReadEx(sKey + "\ParentKeyName", false) <> "" then
+			' Do not display products with parents.
+		else
+			sValue = oUtility.RegReadEx(sKey + "\DisplayName",false)
+			if sValue <> "" then
+				oLogging.CreateEntry "Install(" & right("000" & i, 3) & "): " & sRoot & " \ " & sValue , LogTypeInfo
+				i = i + 1
+			End if
+		end if 
+
+	End function
+
+	Function ConvertObjToArray( oObject, sDelimiters )
+		Dim x
+		ConvertObjToArray = ""
+		for each x in oObject
+			ConvertObjToArray = ConvertObjToArray & x & sDelimiters
+		next
+
+		If right(ConvertObjToArray,1) = sDelimiters then
+			ConvertObjToArray = mid(ConvertObjToArray,1,len(ConvertObjToArray)-1)
+		End if
+	end function
+
+	Function Main
+
+		Dim sKey
+
+		oLogging.CreateEntry "XXXXXXXXXX Get native uninstall Keys... ", LogTypeInfo
+		for each sKey in GetRegSubKeys("HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall")
+			ParseUninstallItem "HKLM\Software...", "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\" + sKey
+		next
+		for each sKey in GetRegSubKeys("HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall")
+			ParseUninstallItem "HKLM\SysWow64...", "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\" + sKey
+		next
+		for each sKey in GetRegSubKeys("HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall")
+			ParseUninstallItem "HKCU\Software...", "HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\" + sKey
+		next
+		for each sKey in GetRegSubKeys("HKCU\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall")
+			ParseUninstallItem "HKCU\SysWow64...", "HKCU\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\" + sKey
+		next
+
+		oLogging.CreateEntry "XXXXXXXXXX installed Windows Update Packages... ", LogTypeInfo
+
+		Dim updateSession
+		Dim searchResults
+		Dim item
+		Dim Bundle
+		Dim Content
+		Dim Results
+		Dim X
+		Dim Cat
+
+		On Error Resume Next
+		Set updateSession = CreateObject("Microsoft.Update.Session")
+		On Error Goto 0
+
+		If updateSession is nothing then
+			oLogging.ReportFailure "Failed to Create Object: Microsoft.Update.Session.", 9904
+		End if
+
+		oLogging.CreateEntry "Start Search..." , LogTypeInfo
+		On Error Resume Next
+		Set searchResults = updateSession.CreateupdateSearcher().Search("IsInstalled = 1 and Type = 'Software'")
+		If Err then
+			If Err.Number = &h8024402c then
+				oLogging.CreateEntry "Error searching for updates: Not Connected to Internet? (" & Err.Number & ")", LogTypeInfo
+				Main = Success
+			Else
+				TestAndLog err = 0, "Windows Update, search for updates."
+				Main = Failure
+			End if
+			Exit Function
+		End if
+		On Error Goto 0
+
+		oLogging.ReportProgress "Processing " & searchResults.Updates.Count & " updates.", 0
+
+		i = 0
+
+		For each item in searchResults.Updates
+
+			cat = ""
+			for each x in Item.Categories
+				if TypeName( x.parent ) <> "Nothing" then
+					if x.Parent.CategoryID <> "6964aab4-c5b5-43bd-a17d-ffb4346a8e1d" then
+						Cat = Cat + x.Name + ","
+					end if
+				else
+					Cat = Cat + x.Name + ","
+				end if 
+			next
+
+			for each Bundle in item.BundledUpdates
+				for each Content in Bundle.DOwnloadContents
+
+					REsults = array ( _
+						item.Identity.UpdateID, _
+						item.autoSelectOnWebSites, _
+						Content.DownloadURL, _
+						Cat, _
+						ConvertObjToArray(Item.KBARticleIDs,","), _
+						ConvertObjToArray(Item.MoreInfoUrls,","), _
+						Item.Title _
+					)
+					oLogging.CreateEntry "WU(" & right("000" & i, 3) & "): " & join(REsults,"	") , LogTypeInfo
+
+		stop
+					i = i + 1
+				next
+			next
+		next
+
+
+	End function
+
+
+
+End class
+
+
+	</script>
+</job>
