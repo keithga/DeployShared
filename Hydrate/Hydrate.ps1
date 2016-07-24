@@ -1,4 +1,7 @@
 
+#Requires -Version 3
+#Requires -RunAsAdministrator
+
 <#
 
 .SYNOPSIS 
@@ -18,10 +21,7 @@ https://github.com/keithga/DeployShared
 
 [cmdletbinding()]
 param(
-    [string] $ScriptVars = "$PSScriptRoot\test\ScriptBlock.xml",
-    [switch] $test,
-    [switch] $Run,
-    [switch] $asJob
+    [HashTable] $ConfigBlock
 )
 
 $ErrorActionPreference = 'stop'
@@ -32,6 +32,7 @@ $ErrorActionPreference = 'stop'
 #region Something
 ##############################################################################
 
+Write-Host "DOne!"
 
 #endregion
 
