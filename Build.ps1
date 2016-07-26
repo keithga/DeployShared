@@ -30,7 +30,8 @@ $ErrorActionPreference = 'stop'
 ##############################################################################
 Write-Verbose "Clean"
 
-Remove-Item -Recurse -Force $PSScriptRoot\Bin
+Remove-Item -Recurse -Force $PSScriptRoot\Bin -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force $PSScriptRoot\library -Include *.psm1,*.psd1 -ErrorAction SilentlyContinue
 
 #endregion
 
@@ -85,7 +86,7 @@ param(
 
 if (`$Verbose) { `$VerbosePreference = 'Continue' }
 
-. `$PSScriptRoot\$($FileList -join "`n. `$PSScriptRoot\")
+. `$PSScriptROot\$($FileList -join "`n. `$PSScriptRoot\")
 
 Export-ModuleMember -Function * 
 
@@ -96,7 +97,7 @@ Export-ModuleMember -Function *
     if ( -not $ManifestName ) 
     {
         $ManifestName = "$($LibPath.FullName)\$($LibPath.Name).psd1"
-        New-ModuleManifest @Modulecommon -path $ManifestName -ModuleToProcess $ModuleName -FileList $FileList -ModuleList $FileList
+        New-ModuleManifest @Modulecommon -path $ManifestName -ModuleToProcess (split-path -leaf $ModuleName) -FileList $FileList -ModuleList $FileList
     }
 
 }
@@ -114,8 +115,6 @@ New-Item -ItemType Directory -Force -Path $PSScriptRoot\Bin -ErrorAction Silentl
 & "$PSScriptRoot\..\..\PS2Wiz\PS2Wiz.ps1" -verbose "$PSScriptRoot\setup\Hydrate.ps1" -OutputFolder "$PSScriptRoot\bin" -Admin
 & "$PSScriptRoot\..\..\PS2Wiz\PS2Wiz.ps1" -verbose "$PSScriptRoot\setup\Hydrate.ps1" -Target Clean
 
-# copy /y "$PSScriptRoot\bin\PowerShell Wizard Host.exe" "$PSScriptRoot\bin\MDTExHydrate.exe"
-
 #endregion
 
 #region CRC Check of files
@@ -126,7 +125,7 @@ Get-ChildItem "$PSScriptRoot\Source\MDT2013U2\scripts\*" |
     Where-Object { Test-Path "$PSScriptRoot\Templates\Distribution\Scripts\$($_.Name)" } |
     Get-FileHash | 
     ForEach-Object { [PSCustomObject] @{ Hash = $_.Hash; Name = (split-path -leaf $_.Path) } } |
-    Export-Clixml -path $PSscriptRoot\bin\DeploySharedScripts.xml
+    Export-Clixml -path $PSscriptRoot\Hydrate\ShareOperations\DeploySharedCRC.xml
 
 #endregion
 
@@ -172,7 +171,6 @@ if ( $test -or $Run)
     Write-verbose "Copy Scripts to Host for testing  $PSScriptRoot\test\HostTest  $($ScriptXML.HostShare)"
     new-psdrive -Name TestTarget -PSProvider FileSystem -root $ScriptXML.HostShare -Credential $scriptxml.HostCredentials | out-string | Write-verbose
     copy-item $PSScriptRoot\test\HostTest\* "$($ScriptXML.HostShare)\Staging" -Recurse -Force | out-string | Write-verbose
-    copy-item $PSScriptRoot\Library "$($ScriptXML.HostShare)\Staging\Library" -Recurse -force | out-string | Write-verbose
     copy-item $MsiPackage "$($ScriptXML.HostShare)\Staging" -Force | out-string | Write-verbose
 
     write-verbose "Invoke-Command -ScriptBlock {$($ScriptXML.HostCommand)} "
@@ -186,6 +184,7 @@ if ( $test -or $Run)
 
     if ( $run )
     {
+        ">"*80 + ">"*80 + "`nbegin remote command`n" + ">"*80 + ">"*80 | Write-Verbose
         $RemoteParams | out-string | Write-verbose
         Invoke-Command @RemoteParams
     }

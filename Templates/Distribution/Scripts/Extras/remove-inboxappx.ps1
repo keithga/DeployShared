@@ -8,7 +8,7 @@ Removes in box Store/Modern/Metro applications from Windows 8.1
 
 .NOTES
 
-Microsoft Deployment Toolkit Extensions http://MDTEx.codeplex.com
+Microsoft Deployment Toolkit Extensions https://github.com/keithga/DeployShared
 Copyright Keith Garner, all rights reserved.
 
 #>

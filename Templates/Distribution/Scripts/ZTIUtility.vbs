@@ -4,7 +4,7 @@
 ' // Copyright (c) Microsoft Corporation.  All rights reserved.
 ' // 
 ' // Microsoft Deployment Toolkit Solution Accelerator
-' //    With http://MDTEx.codeplex.com Modifications
+' //    With https://github.com/keithga/DeployShared Modifications
 ' //
 ' // File:      ZTIUtility.vbs
 ' // 

@@ -3,7 +3,7 @@
 :: //
 :: // Copyright (c) Microsoft Corporation.  All rights reserved.
 :: //
-:: // Microsoft Deployment Toolkit Extensions http://MDTEx.codeplex.com
+:: // Microsoft Deployment Toolkit Extensions https://github.com/keithga/DeployShared
 :: //
 :: // File:      ZTICScript.cmd
 :: //

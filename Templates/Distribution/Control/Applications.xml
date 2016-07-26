@@ -315,7 +315,7 @@
 		<LastModifiedTime>2/2/2015 5:03:22 AM</LastModifiedTime>
 		<LastModifiedBy>MDTAdmin</LastModifiedBy>
 		<ShortName>IE11</ShortName>
-		<CommandLine>IE11-Windows6.1-x86-en-us.exe /passive /norestart</CommandLine>
+		<CommandLine>cscript ZTIPowerShell.wsf /ScriptFile:%ScriptRoot%\Extras\Install-Chocolatey.ps1 /Parameters:IE11</CommandLine>
 		<WorkingDirectory>.</WorkingDirectory>
 		<SupportedPlatform>All x86 Windows 7 Client</SupportedPlatform>
 		<SupportedPlatform>All x64 Windows 7 Client</SupportedPlatform>

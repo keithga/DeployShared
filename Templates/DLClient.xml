@@ -308,7 +308,7 @@
       <step type="BDD_RunPowerShellAction" name="Run PowerShell Script" description="" disable="false" continueOnError="false" successCodeList="0 3010">
         <defaultVarList>
           <variable name="ScriptName" property="ScriptName">%ScriptRoot%\Extras\Install-Chocolatey.ps1</variable>
-          <variable name="Parameters" property="Parameters">-Packages 'ie11','kmdf','dotnet4.6'</variable>
+          <variable name="Parameters" property="Parameters">-Packages 'ie11','kmdf'</variable>
           <variable name="PackageID" property="PackageID"></variable>
         </defaultVarList>
         <action>cscript.exe "%SCRIPTROOT%\ZTIPowerShell.wsf</action>

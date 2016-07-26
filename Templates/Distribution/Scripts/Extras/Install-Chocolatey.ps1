@@ -28,7 +28,7 @@ Chocolatey003=vcredist2010
 
 .LINK
 
-Microsoft Deployment Toolkit Extensions http://MDTEx.codeplex.com
+Microsoft Deployment Toolkit Extensions https://github.com/keithga/DeployShared
 Copyright Keith Garner, all rights reserved.
 
 http://keithga.wordpress.com
@@ -46,12 +46,16 @@ write-verbose "Construct a local path for Chocolatey"
 if ($env:ChocolateyInstall -eq $Null)
 {
     $env:ChocolateyInstall = [Environment]::GetEnvironmentVariable( "ChocolateyInstall" , [System.EnvironmentVariableTarget]::User)
-    if ($env:ChocolateyInstall -eq $Null)
+    if ( -not $env:ChocolateyInstall)
     {
         $env:ChocolateyInstall = join-path ([System.Environment]::GetFolderPath("CommonApplicationData")) "Chocolatey"
-        if ($tsenv:LogPath -ne $null)
+        if ( test-path "c:\MININT\SMSOSD\OSDLOGS\bdd.log" )
         {
-            $env:ChocolateyInstall = join-path $tsenv:LogPath "Chocolatey"
+            $env:ChocolateyInstall = "c:\MININT\Chocolatey"
+        }
+        else
+        {
+            $env:ChocolateyInstall = "$($tsenv:LogPath)\..\Chocolatey"
         }
     }
 }
@@ -74,7 +78,7 @@ write-verbose "Install Chocolatey packages from within MDT"
 foreach ( $Package in $Packages ) 
 {
     write-verbose "Install Chocolatey Package: $ChocoExe $Package"
-    invoke-expression "cmd.exe /c $chocoExe Install $Package  -y -v 2>&1" | out-verbose
+    invoke-expression "cmd.exe /c $chocoExe Install $Package  -y -v 2>&1" | write-verbose
 }
 
 write-verbose "Chocolatey install done"

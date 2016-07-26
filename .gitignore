@@ -216,3 +216,7 @@ Hydrate.wxs
 Library.wxs
 Templates.wxs
 /Templates.Common
+/Library/MDT/MDT.psd1
+/Library/MDT/MDT.psm1
+/Library/Windows/Windows.psd1
+/Library/Windows/Windows.psm1
