@@ -137,7 +137,17 @@ write-verbose "Continue with installation"
 
 if ( test-path $ConfigBlock.CSVPackage ) 
 {
-    import-csv $configBlock.CSVPackage | where-object HyperV -eq TRUE | foreach-object { start-vm -name $_.TSID }
+    $vmList = import-csv E:\Staging\OSandTS.csv | where-object HyperV -eq TRUE | select-object -ExpandProperty TSID
+
+    write-verbose "Start all Hyper-V Machines"
+    Start-VM -Name $VMList
+    while ( Get-VM -Name $VMList | where-object State -eq 'Off' )
+    {
+        Write-Verbose 'Not All machines are stopped: $(Get-Date)'
+        Start-Sleep -Seconds 60
+    }
+
+    # Post Build cleanup
 }
 
 #endregion

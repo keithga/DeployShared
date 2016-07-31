@@ -274,14 +274,6 @@
       <step name="Install OEM Directories" disable="false" continueOnError="true" successCodeList="0 3010" description="" startIn="">
         <action>cscript.exe "%SCRIPTROOT%\Extras\CopyOem.wsf</action>
       </step>
-      <step type="BDD_RunPowerShellAction" name="Run PowerShell Script" description="" disable="false" continueOnError="false" successCodeList="0 3010">
-        <defaultVarList>
-          <variable name="ScriptName" property="ScriptName">%ScriptRoot%\Extras\Install-Chocolatey.ps1</variable>
-          <variable name="Parameters" property="Parameters">-Packages 'ie11','kmdf'</variable>
-          <variable name="PackageID" property="PackageID"></variable>
-        </defaultVarList>
-        <action>cscript.exe "%SCRIPTROOT%\ZTIPowerShell.wsf</action>
-      </step>
       <step type="SMS_TaskSequence_RebootAction" name="Restart computer" description="" disable="false" continueOnError="false" runIn="WinPEandFullOS" successCodeList="0 3010">
         <defaultVarList>
           <variable name="SMSRebootMessage" property="Message"></variable>

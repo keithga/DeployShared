@@ -20,7 +20,8 @@ param(
 
 Write-Verbose "Update Windows 7 image"
 $local:ErrorActionPreference = 'stop'
-$ServicingParams = $PSBoundParameters.GetEnumerator() | where-object key -in 'LogPath','LogLevel'
+
+$PSBoundParameters | Out-String |Write-Verbose
 
 #region prep path
 ###########################################################
@@ -36,7 +37,6 @@ if ( -not ( test-path $PackagePath ) )
 {
     new-item -ItemType directory -path $PackagePath -force | out-string |write-verbose
 }
-
 
 #endregion
 
@@ -61,8 +61,7 @@ foreach ( $uri in $patches -split ',' )
 ###########################################################
 Write-Verbose "Mount Image"
 
-$PSBoundParameters | out-string | write-verbose
-Mount-WindowsImage @PSBoundParameters
+Mount-WindowsImage -path $path -ImagePath $imagePath -Index $index  -LogPath $LogPath
 
 if ( -not ( test-path $path\windows\system32\ntoskrnl.exe ) ) { throw "did not mount $ImagePath" }
 
@@ -81,18 +80,23 @@ for ( $I = 0; $i -lt 3; $i++ )
         if ( $ForceADKDISM )
         {
              & $ForceADKDISM "/image:$Path" /Add-Package "/PackagePath:$PackagePath"
+            if ( -not $? ) 
+            {
+                Write-Warning "DISM return $lastExitCode"
+                throw new-object System.InvalidOperationException
+            }
         }
         else 
         {
             Add-WindowsPackage -LogPath $LogPath -NoRestart -PackagePath $PackagePath -Path $Path
         }
-        $Success = $true   
+        $Success = $true
         break
     }
-    catch [System.Runtime.InteropServices.COMException]
+    catch [System.Runtime.InteropServices.COMException],[System.InvalidOperationException]
     {
-        # ARGH, for whatever reason, DISM is FAILING the first time through the 
-        write-host ("retry {0}: '{1}'" -f ($_.Exception.GetType().FullName), ($_.Exception.Message))
+        write-verbose "ARGH, for whatever reason, DISM is FAILING the first time, run again"
+        write-warning ("retry {0}: '{1}'" -f ($_.Exception.GetType().FullName), ($_.Exception.Message))
     }
     catch
     {
@@ -111,11 +115,11 @@ Write-Verbose "dismount Windows Image"
 
 if ( $Success -eq $true )
 {
-    Dismount-WindowsImage -LogPath LogPath -Save -Path $path
+    Dismount-WindowsImage -LogPath $LogPath -Save -Path $path
 }
 else 
 {
-    Dismount-WindowsImage -LogPath LogPath -discard -Path $path
+    Dismount-WindowsImage -LogPath $LogPath -discard -Path $path
 }
 
 #endregion

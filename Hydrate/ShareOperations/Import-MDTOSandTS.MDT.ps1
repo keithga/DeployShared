@@ -81,16 +81,15 @@ foreach ( $OSTSItem in Import-Csv $CSVPackage )
             elseif ( $OSTSItem.ForceUpdate )
             {
                 $UpdateParams = @{
-                    ImagePath = $OSSourcePath\Sources\Install.wim
+                    ImagePath = "$OSSourcePath\Sources\Install.wim"
                     Path = "$Cache\Updates\$($OSTSItem.OSID)\MountDir"
                     PackagePath = "$Cache\Updates\$($OSTSItem.OSID)"
                     Patches = ($ostsitem.forceupdate -split ',')
-                    LogPath = $env:temp
+                    LogPath = "$env:temp\dism-update.log"
                     ForceADKDISM = "C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\amd64\DISM\dism.exe"
                     Index = $OSIndex + 1
-
                     }
-                & $PSSCriptRoot\Support\Update-WIndows7.ps1 
+                & $PSSCriptRoot\Support\Update-WIndows7.ps1 @UPdateParams -verbose
 
             }
 
