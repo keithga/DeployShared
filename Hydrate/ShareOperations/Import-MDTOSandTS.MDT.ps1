@@ -180,6 +180,7 @@ foreach ( $OSTSItem in Import-Csv $CSVPackage )
 
     #region Create entries in CS.ini
 
+
     if ( $OSTSItem.HyperV )
     {
         $Name = $OSTSItem.TSID
@@ -204,8 +205,16 @@ foreach ( $OSTSItem in Import-Csv $CSVPackage )
         Set-MDTCustomSettings -DPShare $DeploymentLocalPath -Category $uuid -Key "TaskSequenceID" -Value "$($Name)"
         Set-MDTCustomSettings -DPShare $DeploymentLocalPath -Category $uuid -Key "BackupFile" -Value "$($Name).wim"
 
+        foreach ( $Property in 'OSRoleIndex','OSFeatures' )
+        {
+            if ( -not [string]::IsNullOrEmpty( $OSTSItem."$Property" ) )
+            {
+                Set-MDTCustomSettings -DPShare $DeploymentLocalPath -Category $uuid -Key "$Property" -Value $OSTSItem."$Property"
+            }
+        }
+
         CheckPoint-VM -VM $NewVM -SnapShotName "Empty Virtual Machine"
-        # Start-VM -VM $NewVM
+        Start-VM -VM $NewVM
 
     }
 

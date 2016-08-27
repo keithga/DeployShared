@@ -28,8 +28,3 @@ foreach ( $LogPath in get-childitem -verbose -recurse -path $DeploymentShare\Cap
 
 }
 
-
-exit
-
-
-

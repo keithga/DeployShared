@@ -136,6 +136,8 @@ Class ZTIImageCleanup
 			oUtility.RunWithConsoleLogging "DISM.exe /online /cleanup-image /analyzecomponentstore"
 			oUtility.RunWithConsoleLogging "DISM.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase"
 			oUtility.RunWithConsoleLogging "DISM.exe /online /cleanup-image /analyzecomponentstore"
+			oUtility.RunWithConsoleLogging "DISM.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase"
+			oUtility.RunWithConsoleLogging "DISM.exe /online /cleanup-image /analyzecomponentstore"
 		Else
 			oUtility.RunWithConsoleLogging "DISM.exe /online /Cleanup-Image"
 		End if
