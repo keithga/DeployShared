@@ -1,0 +1,27 @@
+URL,ID,Profile,Description
+https://download.microsoft.com/download/C/0/8/C0823F43-BFE9-4147-9B0A-35769CBBE6B0/Windows6.1-KB3020369-x86.msu,Win7x86Svc,Win7x86,KB3020369 - Windows 7 Servicing Stack
+http://download.windowsupdate.com/d/msdownload/update/software/updt/2016/05/windows6.1-kb3125574-v4-x86_ba1ff5537312561795cc04db0b02fbb0a74b2cbd.msu,WIn7x64Con,Win7x86,kb3125574 - Windows 7 Convenience Rollup
+https://download.microsoft.com/download/B/5/2/B529D2A4-14F5-4306-BB73-7AC1A6311629/Windows6.1-KB3185330-x86.msu,Win7x86_1610,Win7x86,KB3185330 - October Monthly update
+http://download.windowsupdate.com/d/msdownload/update/software/secu/2016/10/windows10.0-kb3194798-x86_30ca81056fa468110773767f5b3de65711809c90.msu,Win10x86Cum,Win10x86,KB3194798 - Windows 10 cumulative update 
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-Client-Language-Pack_x86_de-de.cab,LP_Win10x86.de,Win10x86.de,LP_Win10x86.de
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-Client-Language-Pack_x86_es-es.cab,LP_Win10x86.es,Win10x86.es,LP_Win10x86.es
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-Client-Language-Pack_x86_fr-fr.cab,LP_Win10x86.fr,Win10x86.fr,LP_Win10x86.fr
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-Client-Language-Pack_x86_it-it.cab,LP_Win10x86.it,Win10x86.it,LP_Win10x86.it
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-Client-Language-Pack_x86_ja-jp.cab,LP_Win10x86.ja,Win10x86.ja,LP_Win10x86.ja
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-Client-Language-Pack_x86_ko-kr.cab,LP_Win10x86.ko,Win10x86.ko,LP_Win10x86.ko
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-Client-Language-Pack_x86_pt-pt.cab,LP_Win10x86.pt,Win10x86.pt,LP_Win10x86.pt
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-Client-Language-Pack_x86_ru-ru.cab,LP_Win10x86.ru,Win10x86.ru,LP_Win10x86.ru
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-Client-Language-Pack_x86_zh-cn.cab,LP_Win10x86.zh-cn,Win10x86.zh-cn,LP_Win10x86.zh-cn
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-Client-Language-Pack_x86_zh-tw.cab,LP_Win10x86.zh-tw,Win10x86.zh-tw,LP_Win10x86.zh-tw
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-LanguageFeatures-Basic-de-de-Package.cab,LF_Win10x86.de,Win10x86.de,LF_Win10x86.de
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-LanguageFeatures-Basic-es-es-Package.cab,LF_Win10x86.es,Win10x86.es,LF_Win10x86.es
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-LanguageFeatures-Basic-fr-fr-Package.cab,LF_Win10x86.fr,Win10x86.fr,LF_Win10x86.fr
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-LanguageFeatures-Basic-it-it-Package.cab,LF_Win10x86.it,Win10x86.it,LF_Win10x86.it
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-LanguageFeatures-Basic-ja-jp-Package.cab,LF_Win10x86.ja,Win10x86.ja,LF_Win10x86.ja
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-LanguageFeatures-Basic-ko-kr-Package.cab,LF_Win10x86.ko,Win10x86.ko,LF_Win10x86.ko
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-LanguageFeatures-Basic-pt-br-Package.cab,LF_Win10x86.pt,Win10x86.pt,LF_Win10x86.pt
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-LanguageFeatures-Basic-ru-ru-Package.cab,LF_Win10x86.ru,Win10x86.ru,LF_Win10x86.ru
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-LanguageFeatures-Basic-zh-cn-Package.cab,LF_Win10x86.zh-cn,Win10x86.zh-cn,LF_Win10x86.zh-cn
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-LanguageFeatures-Basic-zh-tw-Package.cab,LF_Win10x86.zh-tw,Win10x86.zh-tw,LF_Win10x86.zh-tw
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-LanguageFeatures-Fonts-Jpan-Package.cab,Ja_Font,,Ja_Font
+file://pickettz/scratch$/software/OS_ISOs/14393/LanguagePacks/Microsoft-Windows-LanguageFeatures-Fonts-Kore-Package.cab,Ko_Font,,Ko_Font
