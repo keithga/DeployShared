@@ -78,20 +78,6 @@ foreach ( $OSTSItem in Import-Csv $CSVPackage )
                 $OSIndex = 0
 
             }
-            elseif ( $OSTSItem.ForceUpdate )
-            {
-                $UpdateParams = @{
-                    ImagePath = "$OSSourcePath\Sources\Install.wim"
-                    Path = "$Cache\Updates\$($OSTSItem.OSID)\MountDir"
-                    PackagePath = "$Cache\Updates\$($OSTSItem.OSID)"
-                    Patches = ($ostsitem.forceupdate -split ',')
-                    LogPath = "$env:temp\dism-update.log"
-                    ForceADKDISM = "C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\amd64\DISM\dism.exe"
-                    Index = $OSIndex + 1
-                    }
-                & $PSSCriptRoot\Support\Update-WIndows7.ps1 @UPdateParams -verbose
-
-            }
 
         }
     }
@@ -195,7 +181,7 @@ foreach ( $OSTSItem in Import-Csv $CSVPackage )
 
         New-VHD -Path $VHDPath -SizeBytes 80GB | out-string | Write-Verbose
         $NewVM = New-VM -Name $Name -SwitchName $SwitchName -VHDPath $VHDPath
-        Set-VM -VM $NewVM -ProcessorCount 4 -DynamicMemory -MemoryStartupBytes 3GB -MemoryMinimumBytes 3GB
+        Set-VM -VM $NewVM -ProcessorCount 2 -DynamicMemory -MemoryStartupBytes 1.5GB -MemoryMinimumBytes 1.5GB
         if ( Test-Path "$DeploymentLocalPath\boot\LitetouchPE_Automated_x86.iso" )
         {
             set-VMDVDDrive -VMName $NewVM.Name -Path "$DeploymentLocalPath\boot\LitetouchPE_Automated_x86.iso" 
@@ -204,8 +190,18 @@ foreach ( $OSTSItem in Import-Csv $CSVPackage )
         $uuid = (get-wmiobject -Namespace "Root\virtualization\v2" -class Msvm_VirtualSystemSettingData -Property BIOSGUID -Filter ("InstanceID = 'Microsoft:{0}'" -f $NewVM.VMId.Guid)).BIOSGUID.SubString(1,36)
         Set-MDTCustomSettings -DPShare $DeploymentLocalPath -Category $uuid -Key "TaskSequenceID" -Value "$($Name)"
         Set-MDTCustomSettings -DPShare $DeploymentLocalPath -Category $uuid -Key "BackupFile" -Value "$($Name).wim"
+        Set-MDTCustomSettings -DPShare $DeploymentLocalPath -Category $uuid -Key "PackageSelectionProfile" -Value $OSTSItem.Profile
 
-        foreach ( $Property in 'OSRoleIndex','OSFeatures' )
+        if ( $OSTSItem.WebSiteLanguage )
+        {
+            $LanguagePack = Get-ChildItem "$($DPDrive)`:\packages" -recurse | 
+                where-object psiscontainer -ne true | where-object packagetype -eq LanguagePack | Where-Object Language -EQ $OSTSItem.WebSiteLanguage |
+                Select-Object -ExpandProperty GUID
+
+            Set-MDTCustomSettings -DPShare $DeploymentLocalPath -Category $uuid -Key "LanguagePacks001" -Value $LanguagePack
+        }
+
+        foreach ( $Property in 'OSRoleIndex','OSFeatures','WebSiteLanguage' )
         {
             if ( -not [string]::IsNullOrEmpty( $OSTSItem."$Property" ) )
             {
