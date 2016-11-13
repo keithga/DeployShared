@@ -137,7 +137,7 @@ write-verbose "Continue with installation"
 
 if ( test-path $ConfigBlock.CSVPackage ) 
 {
-    $vmList = import-csv E:\Staging\OSandTS.csv | where-object HyperV -eq TRUE | select-object -ExpandProperty TSID
+    $vmList = import-csv $ConfigBlock.CSVPackage | where-object HyperV -eq TRUE | select-object -ExpandProperty TSID
 
     write-verbose "Start all Hyper-V Machines"
     Start-VM -Name $VMList

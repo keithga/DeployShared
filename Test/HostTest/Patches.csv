@@ -1,0 +1,9 @@
+URL,ID,Profile,Description
+https://download.microsoft.com/download/5/D/0/5D0821EB-A92D-4CA2-9020-EC41D56B074F/Windows6.1-KB3020369-x64.msu,WIn7x64Svc,Win7x64,KB3020369 - Windows 7 Servicing Stack
+http://download.windowsupdate.com/d/msdownload/update/software/updt/2016/05/windows6.1-kb3125574-v4-x64_2dafb1d203c8964239af3048b5dd4b1264cd93b9.msu,Win7x64Con,Win7x64,kb3125574 - Windows 7 Convenience Rollup
+https://download.microsoft.com/download/3/0/7/30782EFF-DD02-4462-9E95-BBE736663934/Windows6.1-KB3185330-x64.msu,Win7x64_1610,Win7x64,KB3185330 - October Monthly update
+https://download.microsoft.com/download/C/0/8/C0823F43-BFE9-4147-9B0A-35769CBBE6B0/Windows6.1-KB3020369-x86.msu,Win7x86Svc,Win7x86,KB3020369 - Windows 7 Servicing Stack
+http://download.windowsupdate.com/d/msdownload/update/software/updt/2016/05/windows6.1-kb3125574-v4-x86_ba1ff5537312561795cc04db0b02fbb0a74b2cbd.msu,WIn7x64Con,Win7x86,kb3125574 - Windows 7 Convenience Rollup
+https://download.microsoft.com/download/B/5/2/B529D2A4-14F5-4306-BB73-7AC1A6311629/Windows6.1-KB3185330-x86.msu,Win7x86_1610,Win7x86,KB3185330 - October Monthly update
+http://download.windowsupdate.com/d/msdownload/update/software/secu/2016/10/windows10.0-kb3194798-x86_30ca81056fa468110773767f5b3de65711809c90.msu,Win10x86Cum,Win10x86,KB3194798 - Windows 10 cumulative update 
+http://download.windowsupdate.com/c/msdownload/update/software/secu/2016/10/windows10.0-kb3194798-x64_8bc6befc7b3c51f94ae70b8d1d9a249bb4b5e108.msu,WIn10x64Cum,Win10x64,KB3194798 - Windows 10 cumulative update 

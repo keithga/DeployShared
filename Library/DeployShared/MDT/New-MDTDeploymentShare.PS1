@@ -82,4 +82,16 @@ function New-MDTDeploymentShare
 
     }
 
+    [XML]$Settings = get-content "$DeploymentLocalPath\control\Settings.xml"
+
+    # $Settings.Settings.'Boot.x64.ExtraDirectory' = "%DEPLOYROOT%\WinPE.x64"
+    # $Settings.Settings.'Boot.x86.ExtraDirectory' = "%DEPLOYROOT%\WinPE.x86"
+    $Settings.Settings.'Boot.x64.IncludeAllDrivers' = "True"
+    $Settings.Settings.'Boot.x86.IncludeAllDrivers' = "True"
+    $Settings.Settings.'Boot.x64.SelectionProfile' = "_WinPE"
+    $Settings.Settings.'Boot.x86.SelectionProfile' = "_WinPE"
+
+    $Settings.Save("$DeploymentLocalPath\control\Settings.xml")
+
+
 }

@@ -326,6 +326,25 @@
           </expression>
         </condition>
       </step>
+      <step type="BDD_InstallRoles" name="Install Roles and Features" description="" disable="false" continueOnError="false" runIn="WinPEandFullOS" successCodeList="0 3010">
+        <defaultVarList>
+          <variable name="OSRoleIndex" property="OSRoleIndex">4</variable>
+          <variable name="OSRoles" property="OSRoles"></variable>
+          <variable name="OSRoleServices" property="OSRoleServices"></variable>
+          <variable name="OSFeatures" property="OSFeatures"></variable>
+        </defaultVarList>
+        <action>cscript.exe "%SCRIPTROOT%\ZTIOSRole.wsf"</action>
+      </step>
+      <step type="BDD_UninstallRoles" name="Uninstall Roles and Features" description="" disable="false" continueOnError="false" runIn="WinPEandFullOS" successCodeList="0 3010">
+        <defaultVarList>
+          <variable name="OSRoleIndex" property="OSRoleIndex">4</variable>
+          <variable name="CompletelyRemove" property="CompletelyRemove">false</variable>
+          <variable name="UninstallOSRoles" property="UninstallOSRoles"></variable>
+          <variable name="UninstallOSRoleServices" property="UninstallOSRoleServices"></variable>
+          <variable name="UninstallOSFeatures" property="UninstallOSFeatures"></variable>
+        </defaultVarList>
+        <action>cscript.exe "%SCRIPTROOT%\ZTIOSRole.wsf" /uninstall</action>
+      </step>
       <step type="SMS_TaskSequence_RebootAction" name="Restart computer" description="" disable="false" continueOnError="false" runIn="WinPEandFullOS" successCodeList="0 3010">
         <defaultVarList>
           <variable name="SMSRebootMessage" property="Message"></variable>
@@ -346,25 +365,6 @@
       </step>
       <step name="VM Factory Fork Action" disable="true" continueOnError="true" successCodeList="0 3010" description="" startIn="">
         <action>cscript.exe "%SCRIPTROOT%\Extras\ImageFactoryFork.wsf</action>
-      </step>
-      <step type="BDD_InstallRoles" name="Install Roles and Features" description="" disable="false" continueOnError="false" runIn="WinPEandFullOS" successCodeList="0 3010">
-        <defaultVarList>
-          <variable name="OSRoleIndex" property="OSRoleIndex">4</variable>
-          <variable name="OSRoles" property="OSRoles"></variable>
-          <variable name="OSRoleServices" property="OSRoleServices"></variable>
-          <variable name="OSFeatures" property="OSFeatures"></variable>
-        </defaultVarList>
-        <action>cscript.exe "%SCRIPTROOT%\ZTIOSRole.wsf"</action>
-      </step>
-      <step type="BDD_UninstallRoles" name="Uninstall Roles and Features" description="" disable="false" continueOnError="false" runIn="WinPEandFullOS" successCodeList="0 3010">
-        <defaultVarList>
-          <variable name="OSRoleIndex" property="OSRoleIndex">4</variable>
-          <variable name="CompletelyRemove" property="CompletelyRemove">false</variable>
-          <variable name="UninstallOSRoles" property="UninstallOSRoles"></variable>
-          <variable name="UninstallOSRoleServices" property="UninstallOSRoleServices"></variable>
-          <variable name="UninstallOSFeatures" property="UninstallOSFeatures"></variable>
-        </defaultVarList>
-        <action>cscript.exe "%SCRIPTROOT%\ZTIOSRole.wsf" /uninstall</action>
       </step>
       <step type="BDD_InstallApplication" name="Install Applications" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
         <action>cscript.exe "%SCRIPTROOT%\ZTIApplications.wsf"</action>
