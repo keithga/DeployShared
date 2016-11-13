@@ -43,17 +43,17 @@ $ModuleCommon = @{
     Author = "Keith Garner (KeithGa@DeploymentLive.com)"
     CompanyName  = "https://github.com/keithga/DeployShared" 
     Copyright = "Copyright Keith Garner (KeithGa@DeploymentLive.com), all Rights Reserved."
-    ModuleVersion = "1.0.0020.0"
+    ModuleVersion = "1.0.0030.0"
     PowershellVersion = "2.0"
     Description = "DeployShared Powershell Library"
     GUID = [GUID]::NewGUID()
 }
 
-Foreach ( $libPath in get-childitem -path $PSscriptRoot\Library -recurse -Directory | where-Object { test-path "$($_.FullName)\*.ps1" } )
+Foreach ( $libPath in get-childitem -path $PSscriptRoot\Library -Directory )
 {
     Write-Verbose "if not exist $($libPath.FullName)\*.psm1, then create"
 
-    $FileList = Get-ChildItem "$($libPath.FullName)\*.ps1" | Select-Object -ExpandProperty Name
+    $FileList = get-childitem -path $libPath.FullName *.ps1 -recurse | %{ (split-path -leaf (split-path $_.fullname )) + "\" + ( split-path -leaf $_ )}
     $ModuleName = Get-ChildItem "$($libPath.FullName)\*.psm1" | Select-Object -ExpandProperty Name -First 1
     $ManifestName = Get-ChildItem "$($libPath.FullName)\*.psd1" | Select-Object -ExpandProperty Name -First 1
 
@@ -103,6 +103,11 @@ Export-ModuleMember -Function *
 }
 
 #endregion 
+
+
+exit
+
+
 
 #region Create Wizard
 ##############################################################################

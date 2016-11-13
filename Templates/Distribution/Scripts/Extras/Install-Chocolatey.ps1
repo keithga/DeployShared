@@ -79,6 +79,12 @@ foreach ( $Package in $Packages )
 {
     write-verbose "Install Chocolatey Package: $ChocoExe $Package"
     invoke-expression "cmd.exe /c $chocoExe Install $Package  -y -v 2>&1" | write-verbose
+
+    if ( $LastExitCode -eq 3010 )
+    {
+        oEnvironment.Item("SMSTSRebootRequested") = "true"
+    }
+
 }
 
 write-verbose "Chocolatey install done"

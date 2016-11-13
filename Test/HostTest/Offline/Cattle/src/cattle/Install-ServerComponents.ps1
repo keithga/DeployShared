@@ -38,6 +38,7 @@ if ( $Mode -eq 'OOBEFirst')
 
     set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
     set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fSingleSessionPerUser" -Value 1
+    reg.exe add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0x00000
     reg.exe add "hklm\SOFTWARE\Policies\Microsoft\Windows NT\Reliability" /v ShutdownReasonOn /t REG_DWORD /d 0x00000000 /f
 
     netsh.exe advfirewall firewall set rule group="remote desktop" new enable=Yes
@@ -104,14 +105,14 @@ if ( $Mode -eq 'OOBELogon')
 
     # Run for each user, not elevated
 
-    reg.exe ADD HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ /v HideFileExt /t REG_DWORD /d 0 /f
-    reg.exe ADD HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ /v Start_ShowRun /t REG_DWORD /d 1 /f
-    reg.exe ADD HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ /v StartMenuAdminTools /t REG_DWORD /d 1 /f
+reg.exe ADD HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ /v HideFileExt /t REG_DWORD /d 0 /f
+reg.exe ADD HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ /v Start_ShowRun /t REG_DWORD /d 1 /f
+reg.exe ADD HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ /v StartMenuAdminTools /t REG_DWORD /d 1 /f
 
-    reg.exe ADD HKCU\Console /v QuickEdit /t REG_DWORD /d 1 /f
+reg.exe ADD HKCU\Console /v QuickEdit /t REG_DWORD /d 1 /f
 
-    for ( $i = 0; $i -lt 30 -and ( -not ( Test-Path 'c:\programdata\Cattle\bginfo.exe')); $i++) { Start-Sleep 1 }
-    & 'c:\programdata\Cattle\bginfo.exe' /NOLICPROMPT /silent /timer:0 'c:\programdata\Cattle\Cattle.bgi'
+for ( $i = 0; $i -lt 30 -and ( -not ( Test-Path 'c:\programdata\Cattle\bginfo.exe')); $i++) { Start-Sleep 1 }
+& 'c:\programdata\Cattle\bginfo.exe' /NOLICPROMPT /silent /timer:0 'c:\programdata\Cattle\Cattle.bgi'
 
 }
 

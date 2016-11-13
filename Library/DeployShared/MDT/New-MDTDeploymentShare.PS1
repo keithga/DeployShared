@@ -58,24 +58,28 @@ function New-MDTDeploymentShare
     "### Create new MDT share $DPDrive [$DeploymentLocalPath] [$DeploymentName]" |write-Verbose
     New-PSDrive -Name $DPDrive -PSProvider MDTProvider -Scope global -Root $DeploymentLocalPath -description $DeploymentName | add-MDTPersistentDrive |out-string |write-Verbose
 
-    "Add MDT Source Share DS00S $SourcePath" | write-Verbose
-    new-PSDrive -Name DS00S -PSProvider MDTProvider -Root $SourcePath -Description "MDT Source Share" -scope Script |out-string |write-verbose
-
-    foreach ( $Folder in "Applications", "Operating Systems", "Out-of-Box Drivers", "Packages", "Task Sequences", "Selection Profiles" )
+    if ( $SourcePath ) 
     {
-        "Copy [DS00S`:\$Folder] to [$($DPDrive)`:\$Folder]" | write-verbose
-        Copy-Item -Path "DS00S`:\$Folder" -Destination "$($DPDrive)`:\$Folder" -Recurse | Out-String |Write-Verbose
-    }
+        "Add MDT Source Share DS00S $SourcePath" | write-Verbose
+        new-PSDrive -Name DS00S -PSProvider MDTProvider -Root $SourcePath -Description "MDT Source Share" -scope Script |out-string |write-verbose
 
-    foreach ( $File in "CustomSettings.ini","BootStrap.ini","settings.xml")
-    {
-        "Copy [$File]" | write-Verbose
-        copy-item "$SourcePath\Control\$File" "$DeploymentLocalPath\Control" | write-verbose
-    }
+        foreach ( $Folder in "Applications", "Operating Systems", "Out-of-Box Drivers", "Packages", "Task Sequences", "Selection Profiles" )
+        {
+            "Copy [DS00S`:\$Folder] to [$($DPDrive)`:\$Folder]" | write-verbose
+            Copy-Item -Path "DS00S`:\$Folder" -Destination "$($DPDrive)`:\$Folder" -Recurse | Out-String |Write-Verbose
+        }
 
-    foreach ( $directory in "scripts","tools","winpe.x86","winpe.x64", "`$OEM`$" )
-    {
-        copy-item -recurse "$SourcePath\$directory\*" "$DeploymentLocalPath\$directory" -Force -ErrorAction SilentlyContinue
+        foreach ( $File in "CustomSettings.ini","BootStrap.ini","settings.xml")
+        {
+            "Copy [$File]" | write-Verbose
+            copy-item "$SourcePath\Control\$File" "$DeploymentLocalPath\Control" | write-verbose
+        }
+
+        foreach ( $directory in "scripts","tools","winpe.x86","winpe.x64", "`$OEM`$" )
+        {
+            copy-item -recurse "$SourcePath\$directory\*" "$DeploymentLocalPath\$directory" -Force -ErrorAction SilentlyContinue | write-verbose
+        }
+
     }
 
 }
