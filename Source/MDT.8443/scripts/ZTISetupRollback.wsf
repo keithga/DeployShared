@@ -1,0 +1,80 @@
+<job id="SetupRollback">
+   <script language="VBScript" src="ZTIUtility.vbs"/>
+   <script language="VBScript">
+
+' // ***************************************************************************
+' // 
+' // Copyright (c) Microsoft Corporation.  All rights reserved.
+' // 
+' // Microsoft Deployment Toolkit Solution Accelerator
+' //
+' // File:      ZTISetupRollback.wsf
+' // 
+' // Version:   6.3.8443.1000
+' // 
+' // Purpose:   Logs Windows Upgrade Failure error
+' // 
+' // Usage:     cscript ZTISetupRollback.wsf [/debug:true]
+' // 
+' // ***************************************************************************
+
+Option Explicit
+RunNewInstance
+
+
+'//----------------------------------------------------------------------------
+'//
+'//  Global constants
+'//
+'//----------------------------------------------------------------------------
+
+'//----------------------------------------------------------------------------
+'//  Main Class
+'//----------------------------------------------------------------------------
+
+Class ZTISetupRollback
+
+	'//----------------------------------------------------------------------------
+	'//  Class instance variable declarations
+	'//----------------------------------------------------------------------------
+	Dim PhaseArray
+	Dim OperationArray
+
+	'//----------------------------------------------------------------------------
+	'//  Constructor to initialize needed global objects
+	'//----------------------------------------------------------------------------
+
+	Private Sub Class_Initialize
+		' initialize Phase and Operation array with static list of error codes
+		PhaseArray = Array("SP_EXECUTION_UNKNOWN", "SP_EXECUTION_DOWNLEVEL", "SP_EXECUTION_SAFE_OS", "SP_EXECUTION_FIRST_BOOT", "SP_EXECUTION_SECOND_BOOT")
+		
+		OperationArray = Array("SP_EXECUTION_OP_UNKNOWN", "SP_EXECUTION_OP_COPY_PAYLOAD", "SP_EXECUTION_OP_DOWNLOAD_UPDATES", _
+			"SP_EXECUTION_OP_INSTALL_UPDATES", "SP_EXECUTION_OP_INSTALL_RECOVERY_ENVIRONMENT", "SP_EXECUTION_OP_INSTALL_RECOVERY_IMAGE", _
+			"SP_EXECUTION_OP_REPLICATE_OC", "SP_EXECUTION_OP_INSTALL_DRIVERS", "SP_EXECUTION_OP_PREPARE_SAFE_OS", _
+			"SP_EXECUTION_OP_PREPARE_ROLLBACK", "SP_EXECUTION_OP_PREPARE_FIRST_BOOT", "SP_EXECUTION_OP_PREPARE_SECOND_BOOT", _
+			"SP_EXECUTION_OP_APPLY_IMAGE", "SP_EXECUTION_OP_MIGRATE_DATA", "SP_EXECUTION_OP_SET_PRODUCT_KEY", "SP_EXECUTION_OP_ADD_UNATTEND", _
+			"SP_EXECUTION_OP_ADD_DRIVER", "SP_EXECUTION_OP_ENABLE_FEATURE", "SP_EXECUTION_OP_DISABLE_FEATURE", "SP_EXECUTION_OP_REGISTER_ASYNC_PROCESS", _
+			"SP_EXECUTION_OP_REGISTER_SYNC_PROCESS", "SP_EXECUTION_OP_CREATE_FILE", "SP_EXECUTION_OP_CREATE_REGISTRY", "SP_EXECUTION_OP_BOOT", _
+			"SP_EXECUTION_OP_SYSPREP", "SP_EXECUTION_OP_OOBE", "SP_EXECUTION_OP_BEGIN_FIRST_BOOT", "SP_EXECUTION_OP_END_FIRST_BOOT", _
+			"SP_EXECUTION_OP_BEGIN_SECOND_BOOT", "SP_EXECUTION_OP_END_SECOND_BOOT", "SP_EXECUTION_OP_POST_OOBE")
+	End Sub
+
+
+	'//----------------------------------------------------------------------------
+	'//  Main routine
+	'//----------------------------------------------------------------------------
+
+	Function Main	
+		Dim iOperation, iPhase
+		iOperation = oShell.RegRead("HKEY_LOCAL_MACHINE\System\Setup\Rollback\Operation")
+		iPhase = oShell.RegRead("HKEY_LOCAL_MACHINE\System\Setup\Rollback\Phase")
+		
+		oLogging.CreateEntry "Upgrade Error:  " & OperationArray(iOperation) & " : " & PhaseArray(iPhase), LogTypeError
+		oEnvironment.Item("UpgradeErrorReturnCode") = iOperation
+		oEnvironment.Item("UpgradeErrorOperation") = OperationArray(iOperation)
+	End Function
+
+ End Class
+
+ </script>
+</job>

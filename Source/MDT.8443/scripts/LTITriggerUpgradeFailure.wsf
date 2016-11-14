@@ -1,0 +1,53 @@
+<job id="LTITriggerUpgradeFailure">
+   <script language="VBScript" src="ZTIUtility.vbs"/>
+   <script language="VBScript">
+
+' // ***************************************************************************
+' // 
+' // Copyright (c) Microsoft Corporation.  All rights reserved.
+' // 
+' // Microsoft Deployment Toolkit Solution Accelerator
+' //
+' // File:      LTITriggerUpgradeFailure.wsf
+' // 
+' // Version:   6.3.8443.1000
+' // 
+' // Purpose:   Logs Windows Upgrade Failure error
+' // 
+' // Usage:     cscript LTITriggerUpgradeFailure.wsf [/debug:true]
+' // 
+' // ***************************************************************************
+
+Option Explicit
+RunNewInstance
+
+Class LTITriggerUpgradeFailure	
+
+	'//----------------------------------------------------------------------------
+	'//  Constructor to initialize needed global objects
+	'//----------------------------------------------------------------------------
+
+	Private Sub Class_Initialize
+		oLogging.CreateEntry "Constructing LTITriggerUpgradeFailure ", LogTypeInfo
+	End Sub
+	
+	'//----------------------------------------------------------------------------
+	'//  Main routine
+	'//----------------------------------------------------------------------------
+
+	Function Main	
+		Dim iRetVal 
+		
+		iRetVal= Success
+		
+		If oEnvironment.Item("UpgradeErrorReturnCode") <> "" then 			
+			oLogging.CreateEntry "Upgrade with error: " & oEnvironment.Item("UpgradeErrorOperation"), LogTypeInfo			
+			iRetVal = CInt(oEnvironment.Item("UpgradeErrorReturnCode"))			
+		End if
+		Main = iRetVal
+	End Function
+
+ End Class
+
+ </script>
+</job>

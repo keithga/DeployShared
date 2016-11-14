@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<sequence version="3.00" name="Old Computer Task Sequence" description="Task sequence template to be used with the OSD OldComputer package">
+  <group expand="true" name="Old Computer" description="" disable="false" continueOnError="false">
+    <action />
+    <step type="BDD_Gather" name="Gather local only" disable="false" continueOnError="false" successCodeList="0 3010" description="" startIn="">
+      <defaultVarList>
+        <variable name="GatherLocalOnly" property="GatherLocalOnly">true</variable>
+        <variable name="RulesFile" property="RulesFile"></variable>
+      </defaultVarList>
+      <action>cscript.exe "%SCRIPTROOT%\ZTIGather.wsf"</action>
+    </step>
+    <step type="SMS_TaskSequence_RunCommandLineAction" name="Generate Application Migration File" description="" disable="false" continueOnError="false" successCodeList="0 3010" runIn="WinPEandFullOS" startIn="">
+      <action>cscript.exe "%SCRIPTROOT%\ZTIAppXmlGen.wsf" /capture</action>
+    </step>
+    <step name="Capture User State" successCodeList="0 3010" description="" startIn="" disable="false" continueOnError="false">
+      <action>cscript.exe "%SCRIPTROOT%\ZTIUserState.wsf" /capture</action>
+    </step>
+  </group>
+</sequence>

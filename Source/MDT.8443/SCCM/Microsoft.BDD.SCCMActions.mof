@@ -1,0 +1,255 @@
+#pragma namespace("\\\\%SMSSERVER%\\root\\sms\\site_%SMSSITECODE%")
+
+[   CommandLine("smsswd.exe /run:%1 cscript.exe Scripts\\ZTISCCM.wsf"),
+    ActionCategory("MDT,1,7"),
+    ActionUI{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions", "ActionBDDPackage", "ActionOptions"},
+    ActionName{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions.Resources", "ActionBDDPackage"},
+    VariablePrefix("BDD")
+    ]
+class BDD_UsePackage : SMS_TaskSequence_Action
+{
+	[TaskSequencePackage, CommandLineArg(1)]
+	string		PackageID;
+
+	string          SupportedEnvironment = "WinPEandFullOS";
+};
+
+
+[   CommandLine("smsswd.exe /run:%1 cscript.exe \"%DeployRoot%\\Scripts\\ZTIGather.wsf\""),
+    ActionCategory("MDT,2,7"),
+    ActionUI{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions", "ActionGather", "ActionOptions"},
+    ActionName{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions.Resources", "ActionGather"}
+    ]
+class BDD_Gather : SMS_TaskSequence_Action
+{
+	boolean		GatherLocalOnly = false;
+	string		RulesFile;
+	[TaskSequencePackage, CommandLineArg(1)]
+	string		PackageID;
+	string          SupportedEnvironment = "WinPEandFullOS";
+};
+
+
+[   CommandLine("smsswd.exe /run: cscript.exe \"%DeployRoot%\\Scripts\\ZTIValidate.wsf\""),
+    ActionCategory("MDT,3,7"),
+    ActionUI{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions", "ActionValidate", "ActionOptions"},
+    ActionName{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions.Resources", "ActionValidate"}
+    ]
+class BDD_Validate : SMS_TaskSequence_Action
+{
+	uint32		ImageMemory = 512;
+	uint32		ImageProcessorSpeed = 800;
+	uint32		ImageSize;
+	string		VerifyOS = "CLIENT";
+	string          SupportedEnvironment = "WinPEandFullOS";
+};
+
+
+[   CommandLine("smsswd.exe /run: cscript.exe \"%DeployRoot%\\Scripts\\ZTIOSRole.wsf\""),
+    ActionCategory("MDT,4,7"),
+    ActionUI{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions", "ActionInstallRoles", "ActionOptions"},
+    ActionName{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions.Resources", "ActionInstallRoles"}
+    ]
+class BDD_InstallRoles : SMS_TaskSequence_Action
+{
+	uint32		OSRoleIndex;
+	string		OSRoles[];
+	string		OSRoleServices[];
+	string		OSFeatures[];
+	string          SupportedEnvironment = "WinPEandFullOS";
+};
+
+
+[   CommandLine("smsswd.exe /run: cscript.exe \"%DeployRoot%\\Scripts\\ZTIOSRole.wsf\" /uninstall"),
+    ActionCategory("MDT,5,7"),
+    ActionUI{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions", "ActionInstallRoles", "ActionOptions"},
+    ActionName{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions.Resources", "ActionUninstallRoles"}
+    ]
+class BDD_UninstallRoles : SMS_TaskSequence_Action
+{
+	uint32		OSRoleIndex;
+	boolean		CompletelyRemove = false;
+	string		UninstallOSRoles[];
+	string		UninstallOSRoleServices[];
+	string		UninstallOSFeatures[];
+	string          SupportedEnvironment = "WinPEandFullOS";
+};
+
+
+[   CommandLine("smsswd.exe /run: cscript.exe \"%DeployRoot%\\Scripts\\ZTIConfigureADDS.wsf\""),
+    ActionCategory("MDT,6,7"),
+    ActionUI{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions", "ActionConfigureADDS", "ActionOptions"},
+    ActionName{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions.Resources", "ActionConfigureADDS"}
+    ]
+class BDD_ConfigureADDS : SMS_TaskSequence_Action
+{
+	string		ReplicaOrNewDomain = "Domain";
+	string		NewDomain = "Forest";
+	string		NewDomainDNSName = "";
+	string		ParentDomainDNSName = "";
+	string		ReplicaDomainDNSName = "";
+	string		ChildName = "";
+	string		DomainNetBiosName = "";
+	string		ForestLevel = "2";
+	string		DomainLevel = "2";
+	string		AutoConfigDNS = "No";
+	string		ConfirmGC = "Yes";
+	string		CriticalReplicationOnly = "No";
+	string		ADDSUserName = "";
+	string		ADDSUserDomain = "";
+	string		ADDSPassword = "";
+	string		ReplicationSourceDC = "";
+	string		DatabasePath = "%systemroot%\\NTDS";
+	string		ADDSLogPath = "%systemroot%\\NTDS";
+	string		SysVolPath = "%systemroot%\\SYSVOL";
+	string		SafeModeAdminPassword = "";
+	string		SiteName = "";
+	string		SupportedEnvironment = "WinPEandFullOS";
+};
+
+
+class BDD_DNSZones
+{
+	string Name;
+	string Type;
+	string MasterIP;
+	string DirectoryPartition;
+	string FileName;
+	boolean Scavenge;
+	sint32 Update;
+};
+
+
+[   CommandLine("smsswd.exe /run: cscript.exe \"%DeployRoot%\\Scripts\\ZTIConfigureDNS.wsf\""),
+    ActionCategory("MDT,7,7"),
+    ActionUI{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions", "ActionConfigureDNS", "ActionOptions"},
+    ActionName{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions.Resources", "ActionConfigureDNS"}
+    ]
+class BDD_ConfigureDNS : SMS_TaskSequence_Action
+{
+	boolean DNSServerOptionDisableRecursion = "false";
+	boolean DNSServerOptionBINDSecondaries = "false";
+	boolean DNSServerOptionFailOnLoad = "false";
+	boolean DNSServerOptionEnableRoundRobin = "true";
+	boolean DNSServerOptionEnableNetmaskOrdering = "true";
+	boolean DNSServerOptionEnableSecureCache = "true";
+	sint32  DNSServerOptionNameCheckFlag = 3;
+	BDD_DNSZones	DNSZones[];
+	string          SupportedEnvironment = "WinPEandFullOS";
+};
+
+
+class BDD_DHCPScopes
+{
+	string		SubnetMask;
+	string 		IP;
+	string		Name;
+	string		Description;
+	string		StartIP;
+	string		EndIP;
+	string		ExcludeStartIP;
+	string		ExcludeEndIP;
+	string		OptionRouter;
+	string		OptionDNSServer;
+	string		OptionWINSServer;
+	string		OptionDNSDomainName;
+	string		OptionNBTNodeType;
+	string		OptionLease;
+	string		OptionPXEClient;
+};
+
+
+[   CommandLine("smsswd.exe /run: cscript.exe \"%DeployRoot%\\Scripts\\ZTIConfigureDHCP.wsf\""),
+    ActionCategory("MDT,8,7"),
+    ActionUI{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions", "ActionConfigureDHCP", "ActionOptions"},
+    ActionName{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions.Resources", "ActionConfigureDHCP"}
+    ]
+class BDD_ConfigureDHCP : SMS_TaskSequence_Action
+{
+	string		DHCPServerOptionRouter;
+	string		DHCPServerOptionDNSServer;
+	string		DHCPServerOptionWINSServer;
+	string		DHCPServerOptionDNSDomainName;
+	string		DHCPServerOptionNBTNodeType;
+	string		DHCPServerOptionPXEClient;
+	BDD_DHCPScopes	DHCPScopes[];
+	string          SupportedEnvironment = "WinPEandFullOS";
+};
+
+
+[   CommandLine("smsswd.exe /run:%1 cscript.exe %DeployRoot%\\Scripts\\ZTIPatches.wsf"),
+    ActionCategory("MDT,9,7"),
+    ActionUI{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions", "ActionInstallUpdatesOffline", "ActionOptions"},
+    ActionName{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions.Resources", "ActionInstallUpdatesOffline"}
+    ]
+class BDD_InstallUpdatesOffline : SMS_TaskSequence_Action
+{
+	[TaskSequencePackage, CommandLineArg(1)]
+	string		PackageID;
+	string          SupportedEnvironment = "WinPEandFullOS";
+};
+
+
+[   CommandLine("smsswd.exe /run:%1 cscript.exe %DeployRoot%\\Scripts\\ZTIPatches.wsf"),
+    ActionCategory("MDT,10,7"),
+    ActionUI{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions", "ActionInstallLanguagePacks", "ActionOptions"},
+    ActionName{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions.Resources", "ActionInstallLanguagePacksOffline"}
+    ]
+class BDD_InstallLanguagePacksOffline : SMS_TaskSequence_Action
+{
+	[TaskSequencePackage, CommandLineArg(1)]
+	string		PackageID;
+	string          SupportedEnvironment = "WinPE";
+};
+
+
+[   CommandLine("smsswd.exe /run:%1 cscript.exe %DeployRoot%\\Scripts\\ZTILangPacksOnline.wsf"),
+    ActionCategory("MDT,11,7"),
+    ActionUI{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions", "ActionInstallLanguagePacks", "ActionOptions"},
+    ActionName{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions.Resources", "ActionInstallLanguagePacksOnline"}
+    ]
+class BDD_InstallLanguagePacksOnline : SMS_TaskSequence_Action
+{
+	[TaskSequencePackage, CommandLineArg(1)]
+	string		PackageID;
+	string          SupportedEnvironment = "FullOS";
+};
+
+[   CommandLine("smsswd.exe /run:%1 cscript.exe %DeployRoot%\\Scripts\\ZTIPowerShell.wsf"),
+    ActionCategory("MDT,12,7"),
+    ActionUI{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions", "ActionRunPowerShell", "ActionOptions"},
+    ActionName{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions.Resources", "ActionRunPowerShell"}
+    ]
+class BDD_RunPowerShellAction : SMS_TaskSequence_Action
+{
+	string		ScriptName;
+	string		Parameters;
+	[TaskSequencePackage, CommandLineArg(1)]
+	string		PackageID;
+	string          SupportedEnvironment = "WinPEandFullOS";
+};
+
+[   CommandLine("smsswd.exe /run: cscript.exe \"%DeployRoot%\\Scripts\\ZTIExecuteRunbook.wsf\""),
+    ActionCategory("MDT,13,7"),
+    ActionUI{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions", "ActionExecuteRunbook", "ActionOptions"},
+    ActionName{"Microsoft.BDD.SCCMActions.dll", "Microsoft.BDD.Actions.Resources", "ActionExecuteRunbook"}
+    ]
+class BDD_ExecuteRunbook : SMS_TaskSequence_Action
+{
+	string		OrchestratorServer;
+	string		RunbookID;
+	string		RunbookName;
+	string		RunbookParameterMode;
+	BDD_RunbookParameters RunbookParameters[];
+	string		RunbookServer;
+	boolean		WaitUntilComplete = "true";
+	string		SupportedEnvironment = "WinPEandFullOS";
+};
+
+
+class BDD_RunbookParameters
+{
+	string		ParameterID;
+	string 		ParameterName;
+	string		ParameterValue;
+};
