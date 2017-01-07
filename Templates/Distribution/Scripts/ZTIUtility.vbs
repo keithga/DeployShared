@@ -4,11 +4,10 @@
 ' // Copyright (c) Microsoft Corporation.  All rights reserved.
 ' // 
 ' // Microsoft Deployment Toolkit Solution Accelerator
-' //    With https://github.com/keithga/DeployShared Modifications
 ' //
 ' // File:      ZTIUtility.vbs
 ' // 
-' // Version:   6.3.8330.1001
+' // Version:   6.3.8443.1001
 ' // 
 ' // Purpose:   Common Libraries for Microsoft Deployment Toolkit
 ' // 
@@ -38,7 +37,7 @@ Public Const adOpenStatic = 3
 Public Const adLockReadOnly = 1
 Public Const adLockOptimistic = 3
 
-Public Const Version = "6.3.8330.1001"
+Public Const Version = "6.3.8443.1001"
 
 
 ' Global variables
@@ -172,7 +171,7 @@ class Logging
 				Exit Function  ' Verbose Messages are only displayed when Debug = True
 			Elseif iType = LogTypeDeprecated Then
 				iType = LogTypeInfo ' Deprecated messages are normally Info messages
-			End if
+			End if			
 
 		Else  ' Debug = True
 
@@ -186,9 +185,9 @@ class Logging
 
 		' Suppress messages containing password
 
-		If Instr(1, sLogMsg, "password", 1) > 0 then
-			sLogMsg = "<Message containing password has been suppressed>"
-		End if
+			If Instr(1, sLogMsg, "password", 1) > 0 then
+				sLogMsg = "<Message containing password has been suppressed>"
+			End if
 
 		' Populate the variables to log
 
@@ -1067,8 +1066,8 @@ Class Environment
 
 		Select Case Ucase(sVariable)
 		Case "USERID", "USERPASSWORD", "USERDOMAIN", "DOMAINADMIN", "DOMAINADMINPASSWORD", "DOMAINADMINDOMAIN", _
-		 "ADMINPASSWORD", "BDEPIN", "TPMOWNERPASSWORD", "ADDSUSERNAME", "ADDSPASSWORD", _
-		 "SAFEMODEADMINPASSWORD", "USERNAME", "USERPASSWORD", "PRODUCTKEY", "OSDJOINACCOUNT", "OSDJOINPASSWORD"
+                   "ADMINPASSWORD", "BDEPIN", "TPMOWNERPASSWORD",  "USERNAME", "USERPASSWORD", "PRODUCTKEY", "OSDJOINACCOUNT",_
+                   "SAFEMODEADMINPASSWORD","OSDJOINPASSWORD"
 			ObfuscateEncode = oStrings.Base64Encode(sNew)
 		Case Else
 			ObfuscateEncode = sNew
@@ -1081,8 +1080,8 @@ Class Environment
 
 		Select Case Ucase(sVariable)
 		Case "USERID", "USERPASSWORD", "USERDOMAIN", "DOMAINADMIN", "DOMAINADMINPASSWORD", "DOMAINADMINDOMAIN", _
-		 "ADMINPASSWORD", "BDEPIN", "TPMOWNERPASSWORD", "ADDSUSERNAME", "ADDSPASSWORD", _
-		 "SAFEMODEADMINPASSWORD", "USERNAME", "USERPASSWORD", "PRODUCTKEY", "OSDJOINACCOUNT", "OSDJOINPASSWORD"
+                   "ADMINPASSWORD", "BDEPIN", "TPMOWNERPASSWORD",  "USERNAME", "USERPASSWORD", "PRODUCTKEY", "OSDJOINACCOUNT",_
+                   "SAFEMODEADMINPASSWORD","OSDJOINPASSWORD"
 			ObfuscateDecode = oStrings.Base64Decode(sCurrent)
 
 
@@ -1615,21 +1614,21 @@ Class Utility
 		If length >=0 then
 			Select case length
 			Case 1
-				iVersionMinor = CInt(splitArray(1))
+				iVersionMinor = CInt(splitArray(1)) 
 			
 			Case 2
-				iVersionMinor = CInt(splitArray(1))
-				iBuildNumber = CInt(splitArray(2))
+				iVersionMinor = CInt(splitArray(1)) 
+				iBuildNumber = CInt(splitArray(2)) 
 			Case 3
-				iVersionMinor = CInt(splitArray(1))
-				iBuildNumber = CInt(splitArray(2))
+				iVersionMinor = CInt(splitArray(1)) 
+				iBuildNumber = CInt(splitArray(2)) 
 				iRevision = CInt(splitArray(3)) 
 			Case Else	
 				iVersionMinor = 32767
 				iBuildNumber = 32767
-				iRevision = 32767
+				iRevision = 32767	
 			End select
-			iVersionMajor = CInt(splitArray(0))
+			iVersionMajor = CInt(splitArray(0))				
 		Else
 			iVersionMajor = 32767  'Int.Max for VbScript is 32767
 			iVersionMinor = 32767
@@ -1638,16 +1637,16 @@ Class Utility
 		End if
 	End Function
 
-	' This function retrieves MSXML DOM document using MSXML2.DomDocument.6.0 
-	' If it cannot load tries to get from MSXML2.DOMDocument.3.0 
+        ' This function retrieves MSXML DOM document using MSXML2.DomDocument.6.0 
+        ' If it cannot load tries to get from MSXML2.DOMDocument.3.0 
 	Public Function GetMSXMLDOMDocument 
-		On Error Resume Next
-		Set GetMSXMLDOMDocument = CreateObject("MSXML2.DOMDocument.6.0")
-		If Err Then
-			Set GetMSXMLDOMDocument = CreateObject("MSXML2.DOMDocument")
-		End If
-		On Error Goto 0
-	End Function
+                On Error Resume Next
+                Set GetMSXMLDOMDocument = CreateObject("MSXML2.DOMDocument.6.0")
+                If Err Then
+                        Set GetMSXMLDOMDocument = CreateObject("MSXML2.DOMDocument")
+                End If
+                On Error Goto 0
+        End Function
 
 	Private Function GetArguments
 	
@@ -1751,6 +1750,7 @@ Class Utility
 
 	End Function
 
+
 	Sub ResetLocalRootPath
 		sLocalRootPath = empty
 	End sub
@@ -1766,7 +1766,7 @@ Class Utility
 	Public Property Get VersionMajor
 		VersionMajor = iVersionMajor
 	End Property
-
+	
 	Public Property Get VersionMinor
 		VersionMinor = iVersionMinor
 	End Property
@@ -2236,7 +2236,6 @@ Class Utility
 		End if
 	End function
 
-	dim g_LastProgress
 
 	Function  StandardConsoleProcessing ( oExec, byRef iLastProgress ) 
 		Dim sLines
@@ -2257,12 +2256,19 @@ Class Utility
 
 					if oExec.Status = 0 then
 						' If the output contains a percentage, then interpret it a status.
+						
 						' Check for DISM-style progress
-						Set oMatch = oRegEx.GetRegExMatches("([01]?[0-9]?[0-9])\.?[0-9]? ?\%",sLine)
-						If oMatch.Count > 0 and g_LastProgress <> iLastProgress then
+						Set oMatch = oRegEx.GetRegExMatches("([01]?[0-9]?[0-9])\.[0-9]\%",sLine)
+						If oMatch.Count > 0 then
 							iLastProgress = cint(oMatch(oMatch.Count -1).SubMatches(0))
 							oLogging.ReportProgress sLine, iLastProgress
-							g_LastProgress = iLastProgress
+						Else
+							' Check for "other" percentage
+							set oMatch = oRegEx.GetRegExMatches("([01]?[0-9]?[0-9]) ?\%",sLine)
+							If oMatch.Count > 0 then
+								iLastProgress = cint(oMatch(oMatch.Count -1).SubMatches(0))
+								oLogging.ReportProgress sLine, iLastProgress
+							End if
 						End if
 					End if
 				Next
@@ -3250,6 +3256,11 @@ Class Utility
 
 	End Function
 
+	Private Sub SetIfChanged(sVar, sVal)
+		If oEnvironment.Item(sVar) <> sVal then
+			oEnvironment.Item(sVar) = sVal
+		End if
+	End Sub
 
 	Sub SetTaskSequenceProperties(tsID)
 
@@ -3274,7 +3285,8 @@ Class Utility
 
 		If tsID <> "" then
 
-			' Get the build record
+			' Get the task sequence record
+
 			tsID = Ucase(tsID)
 
 			Set oTaskSequences = oUtility.CreateXMLDOMObjectEx(oEnvironment.Item("DeployRoot") & "\Control\TaskSequences.xml")
@@ -3290,103 +3302,155 @@ Class Utility
 			oEnvironment.Item("TaskSequenceName") = oUtility.SelectSingleNodeString(oTaskSequence,"Name")
 			oEnvironment.Item("TaskSequenceVersion") = oUtility.SelectSingleNodeStringEx(oTaskSequence,"Version", False)
 			oEnvironment.Item("TaskSequenceTemplate") = oUtility.SelectSingleNodeStringEx(oTaskSequence,"TaskSequenceTemplate", False)
-			
-			' Load the TS.XML and get the OSGUID
+
+
+			' Blank out any previous values			
+
+			SetIfChanged "ImageIndex", ""
+			SetIfChanged "ImageSize", ""
+			SetIfChanged "ImageFlags", ""
+			SetIfChanged "ImageBuild", ""
+			SetIfChanged "InstallFromPath", ""
+			SetIfChanged "ImageMemory", ""
+			SetIfChanged "ImageProcessor", ""
+			SetIfChanged "OSGUID", ""
+			SetIfChanged "IsOSUpgrade", ""
+
+
+			' Load the TS.XML
 
 			Set oTS = oUtility.CreateXMLDOMObjectEx(oEnvironment.Item("DeployRoot") & "\Control\" & tsID & "\TS.xml")
-			Set oOSGUID = oTS.SelectSingleNode("//globalVarList/variable[@name='OSGUID']")
-			If oOSGUID is Nothing then
-
-				Exit Sub
-			End if
-			oEnvironment.Item("OSGUID")=oOSGUID.text
-
-			' Get the OS record
-
-			Set oOperatingSystems = oUtility.CreateXMLDOMObjectEx(oEnvironment.Item("DeployRoot") & "\Control\OperatingSystems.xml")
-			Set oOS = oOperatingSystems.selectSingleNode("//os[@guid='" & oOSGUID.text & "']")
-			If oOS is Nothing then
-				oLogging.CreateEntry "ERROR: Invalid OS GUID " & oOSGUID.text & " specified for task sequence " & tsID & " specified", LogTypeInfo
-				Exit Sub
-			End if
 
 
-			' Set the simple OS properties
+			' Determine the deployment type
 
-			oEnvironment.Item("ImageIndex") = oUtility.SelectSingleNodeString(oOS,"ImageIndex")
-			oEnvironment.Item("ImageSize") = oUtility.SelectSingleNodeString(oOS,"Size")
-			on error resume next
-			oEnvironment.Item("ImageFlags") = oOS.selectSingleNode("Flags").text
-			on error goto 0
-			oEnvironment.Item("ImageBuild") = oUtility.SelectSingleNodeString(oOS,"Build")
-			oEnvironment.Item("ImageProcessor") = oUtility.SelectSingleNodeString(oOS,"Platform")
+			'If (oTS.SelectSingleNode("//step[@type='BDD_InstallOS']") is nothing) and (oTS.SelectSingleNode("//step[@type='BDD_UpgradeOS']") is nothing) then
+			If (oTS.SelectSingleNode("//step[@type='BDD_InstallOS' and @disable='false']") is nothing) and (oTS.SelectSingleNode("//step[@type='BDD_UpgradeOS' and @disable='false']") is nothing) then
+				oLogging.CreateEntry "Task Sequence does not contain an OS and does not contain a LTIApply.wsf step, possibly a Custom Step or a Client Replace.", LogTypeInfo
+				oEnvironment.Item("OSGUID")=""
+				If not (oTS.SelectSingleNode("//group[@name='State Restore']") is nothing) then
+					oEnvironment.Item("DeploymentType") = "StateRestore"
+				ElseIf oEnvironment.Item("TaskSequenceTemplate") <> "ClientReplace.xml" and oTS.SelectSingleNode("//step[@name='Capture User State']") is nothing then
+					oEnvironment.Item("DeploymentType") = "CUSTOM"
+				Else
+					oEnvironment.Item("DeploymentType") = "REPLACE"
+					oEnvironment.Item("ImageProcessor") = Ucase(oEnvironment.Item("Architecture"))
+				End if
 
+			Elseif oEnvironment.Item("OSVERSION")="WinPE" Then
 
-			' Get the languages
+				oEnvironment.Item("DeploymentType") = "NEWCOMPUTER"		
 
-			Set oImageLang = oOS.selectNodes("Language")
-			sImageLang = ""
-			If not (oImageLang is Nothing) then
-				For each oLanguage in oImageLang
-					sImageLang = sImageLang & oLanguage.text & vbTab
-				Next
-			End if
-			If right(sImageLang,1) = vbTab then
-				sImageLang = Left(sImageLang, Len(sImageLang)-1)  ' Remove trailing tab
-			End if
-			oEnvironment.ListItem("ImageLanguage") = split(sImageLang, vbTab)
-
-
-			' Set the image path
-
-			If oOS.selectSingleNode("ImageFile") is nothing then
-				sImagePath = "."
 			Else
-				sImagePath = oOS.selectSingleNode("ImageFile").Text
-				If sImagePath = "" and left(oEnvironment.Item("ImageBuild"),1) = "5" then
-					sImagePath = "."
+
+				oLogging.CreateEntry "Task Sequence contains a LTIApply.wsf step, and is not running within WinPE.", LogTypeInfo
+				If oTS.SelectSingleNode("//globalVarList/variable[@name='IsOSUpgrade']") is nothing then
+					oEnvironment.Item("DeploymentType") = "REFRESH"
+				Else 
+					oEnvironment.Item("DeploymentType") = "UPGRADE"
+					oEnvironment.Item("IsOSUpgrade") = "1"
 				End if
+
+			End if
+
+			If oEnvironment.Item("IsOSUpgrade") = "" then
+				oEnvironment.Item("IsOSUpgrade") = "0"
 			End if
 
 
-			If Left(sImagePath, 1) = "." then
+			' Get the OS details
 
-				' See if this is a WDS image
+			Set oOSGUID = oTS.SelectSingleNode("//globalVarList/variable[@name='OSGUID']")
+			If not (oOSGUID is Nothing) then
 
-				Set oWDSServer = oOS.selectSingleNode("WDSServer")
-				If not (oWDSServer is Nothing) then
-					sWDSServer = oWDSServer.Text
+				' Get the OS record
+
+				oEnvironment.Item("OSGUID") = oOSGUID.text
+				Set oOperatingSystems = oUtility.CreateXMLDOMObjectEx(oEnvironment.Item("DeployRoot") & "\Control\OperatingSystems.xml")
+				Set oOS = oOperatingSystems.selectSingleNode("//os[@guid='" & oOSGUID.text & "']")
+				If oOS is Nothing then
+					oLogging.CreateEntry "ERROR: Invalid OS GUID " & oOSGUID.text & " specified for task sequence " & tsID & " specified", LogTypeInfo
+					Exit Sub
 				End if
 
 
-				' Make sure that's where we want to pull it from
+				' Set the simple OS properties
 
-				If sWDSServer <> "" then
-					If oEnvironment.Item("WDSServer") <> "" then
-						sWDSServer = oEnvironment.Item("WDSServer")
+				oEnvironment.Item("ImageIndex") = oUtility.SelectSingleNodeString(oOS,"ImageIndex")
+				oEnvironment.Item("ImageSize") = oUtility.SelectSingleNodeString(oOS,"Size")
+				on error resume next
+				oEnvironment.Item("ImageFlags") = oOS.selectSingleNode("Flags").text
+				on error goto 0
+				oEnvironment.Item("ImageBuild") = oUtility.SelectSingleNodeString(oOS,"Build")
+				oEnvironment.Item("ImageProcessor") = oUtility.SelectSingleNodeString(oOS,"Platform")
+
+
+				' Get the languages
+
+				Set oImageLang = oOS.selectNodes("Language")
+				sImageLang = ""
+				If not (oImageLang is Nothing) then
+					For each oLanguage in oImageLang
+						sImageLang = sImageLang & oLanguage.text & vbTab
+					Next
+				End if
+				If right(sImageLang,1) = vbTab then
+					sImageLang = Left(sImageLang, Len(sImageLang)-1)  ' Remove trailing tab
+				End if
+				oEnvironment.ListItem("ImageLanguage") = split(sImageLang, vbTab)
+
+
+				' Set the image path
+
+				If oOS.selectSingleNode("ImageFile") is nothing then
+					sImagePath = "."
+				Else
+					sImagePath = oOS.selectSingleNode("ImageFile").Text
+					If sImagePath = "" and left(oEnvironment.Item("ImageBuild"),1) = "5" then
+						sImagePath = "."
 					End if
 				End if
 
+				If Left(sImagePath, 1) = "." then
 
-				' Set the actual image path
+					' See if this is a WDS image
 
-				If sWDSServer <> "" then
-					sImagePath = "\\" & sWDSServer & "\REMINST" & Mid(sImagePath, 2)
-				Else
-					sImagePath = oEnvironment.Item("DeployRoot") & Mid(sImagePath, 2)
+					Set oWDSServer = oOS.selectSingleNode("WDSServer")
+					If not (oWDSServer is Nothing) then
+						sWDSServer = oWDSServer.Text
+					End if
+
+
+					' Make sure that's where we want to pull it from
+
+					If sWDSServer <> "" then
+						If oEnvironment.Item("WDSServer") <> "" then
+							sWDSServer = oEnvironment.Item("WDSServer")
+						End if
+					End if
+
+
+					' Set the actual image path
+
+					If sWDSServer <> "" then
+						sImagePath = "\\" & sWDSServer & "\REMINST" & Mid(sImagePath, 2)
+					Else
+						sImagePath = oEnvironment.Item("DeployRoot") & Mid(sImagePath, 2)
+					End if
+
 				End if
 
-			End if
+				oLogging.CreateEntry "InstallFromPath: " & sImagePath, LogTypeInfo
+				oEnvironment.Item("InstallFromPath") = oFileHandling.NormalizePath(sImagePath)
 
-			oLogging.CreateEntry "InstallFromPath: " & sImagePath, LogTypeInfo
-			oEnvironment.Item("InstallFromPath") = oFileHandling.NormalizePath(sImagePath)
+				sSourcePath = oUtility.SelectSingleNodeString(oOS,"Source")
+				If Left(sSourcePath, 1) = "." then
+					sSourcePath = oEnvironment.Item("DeployRoot") & Mid(sSourcePath, 2)
+				End if
+				oLogging.CreateEntry "SourcePath: " & sSourcePath, LogTypeInfo
+				oEnvironment.Item("SourcePath") = sSourcePath
 
-			sSourcePath = oUtility.SelectSingleNodeString(oOS,"Source")
-			If Left(sSourcePath, 1) = "." then
-				sSourcePath = oEnvironment.Item("DeployRoot") & Mid(sSourcePath, 2)
 			End if
-			oLogging.CreateEntry "SourcePath: " & sSourcePath, LogTypeInfo
-			oEnvironment.Item("SourcePath") = sSourcePath
 
 		End if
 
@@ -4535,4 +4599,3 @@ class clsRegEx
 
 
 end class
-
