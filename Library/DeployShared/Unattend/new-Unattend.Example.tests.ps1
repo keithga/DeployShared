@@ -10,10 +10,19 @@ UNATTEND  {
     SETTINGS specialize  {
         COMPONENT Microsoft-Windows-Shell-Setup {
             ELEMENT TimeZone [System.Timezone]::CurrentTimezone.StandardName
-            ELEMENT RegisteredOrganization (Get-ItemPropertyValue -path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -Name RegisteredOrganization)
-            ELELENT RegisteredOwner (Get-ItemPropertyValue -path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -Name RegisteredOwner)
+            ELEMENT RegisteredOrganization "Registred Orginzation"
+            ELELENT RegisteredOwner "Registered User"
             ELEMENT ComputerName "*"
         }
+
+        COMPONENT Microsoft-Windows-IE-ESC { 
+            ELEMENT IEHardenAdmin "false" 
+            ELEMENT IEHardenUser  "false"
+        } 
+        COMPONENT Microsoft-Windows-IE-InternetExplorer {
+            ELEMENT Home_Page "about:tab"
+        }
+
         if ( $False ) {
             COMPONENT Microsoft-Windows-UnattendedJoin {
                 ELEMENT Identification {
@@ -90,24 +99,5 @@ UNATTEND  {
             ELEMENT UserLocale    (Get-WinUserLanguageList).LanguageTag
         }
     }
-
-    SETTINGS Specialize { COMPONENT Microsoft-Windows-IE-ESC { ELEMENT IEHardenAdmin "false" } }
-    SETTINGS Specialize { COMPONENT Microsoft-Windows-IE-ESC { ELEMENT IEHardenUser  "false" } }
-
 }  
 
-@"
-<?xml version="1.0" encoding="utf-8"?>
-<unattend xmlns="urn:schemas-microsoft-com:unattend">
-    <settings pass="specialize">
-       <component name="Microsoft-Windows-IE-ESC" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-         <IEHardenAdmin>false</IEHardenAdmin>
-         <IEHardenUser>false</IEHardenUser>
-       </component>
-       <component name="Microsoft-Windows-IE-InternetExplorer" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-         <Home_Page>about:tab</Home_Page>
-       </component>
-    </settings>
-
-</unattend>
-"@

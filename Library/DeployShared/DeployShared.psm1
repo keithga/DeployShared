@@ -29,11 +29,15 @@ if ($Verbose) { $VerbosePreference = 'Continue' }
 . $PSScriptRoot\Disk\format-newDisk.ps1
 . $PSScriptRoot\Disk\Get-NewDismArgs.ps1
 . $PSScriptRoot\Disk\Invoke-DiskPart.ps1
+. $PSScriptRoot\Disk\new-ISOImage.ps1
 . $PSScriptRoot\Hyper-V\get-VMBiosGuid.ps1
 . $PSScriptRoot\Hyper-V\New-HyperVirtualMachine.ps1
+. $PSScriptRoot\MDT\get-ADKPath.ps1
 . $PSScriptRoot\MDT\New-MDTDeploymentShare.PS1
 . $PSScriptRoot\MDT\Set-MDTBootStrap.ps1
 . $PSScriptRoot\MDT\Set-MDTCustomSettings.ps1
+. $PSScriptRoot\Unattend\new-unattend.ps1
+. $PSScriptRoot\Unattend\Save-XMLFile.ps1
 . $PSScriptRoot\Windows\Copy-ItemWithProgress.ps1
 . $PSScriptRoot\Windows\Get-MSIProperties.ps1
 . $PSScriptRoot\Windows\Get-PrivateProfileString.ps1

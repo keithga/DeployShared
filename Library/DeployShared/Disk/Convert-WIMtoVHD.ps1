@@ -14,12 +14,14 @@ function Convert-WIMtoVHD
         [string] $Name,
         [int]    $Generation = 1,
         [uint64]  $SizeBytes = 120GB,
+        [string[]] $Packages,
+        [switch] $Turbo,
         [scriptblock] $AdditionalContent,
         $Aux,
         [switch] $Force
     )
 
-    Write-Verbose "WIM [$WimFile]  to VHD [$VHDFile]"
+    Write-Verbose "WIM [$ImagePath]  to VHD [$VHDFile]"
     Write-Verbose "SizeBytes=$SIzeBytes  Generation:$Generation Force: $Force Index: $Index"
 
     if ( ( Test-Path $VHDFile) -and $Force )
@@ -46,8 +48,8 @@ function Convert-WIMtoVHD
     $ApplyPath = $NewDisk | get-partition | get-volume | where-object FileSystem -eq 'NTFS' | 
         sort -Property Size | Select-Object -last 1 | Foreach-object { $_.DriveLetter + ":" }
 
-    # $ApplySys = $NewDisk | get-partition | where-object { ($_.Type -eq 'System') -or ( $_.Type -eq 'FAT32 XINT13') } | get-volume | Foreach-object { $_.DriveLetter + ":" }
-    $ApplySys = $NewDisk | get-partition | get-volume | where-object FileSystemLabel -eq 'SYSTEM' | Foreach-object { $_.DriveLetter + ":" }
+    $ApplySys = $NewDisk | get-partition | where-object { ($_.Type -eq 'System') -or ( $_.Type -eq 'FAT32 XINT13') } | Foreach-object { $_.DriveLetter + ":" }
+    #$ApplySys = $NewDisk | get-partition | get-volume | where-object FileSystemLabel -eq 'SYSTEM' | Foreach-object { $_.DriveLetter + ":" }
     
     write-verbose "Expand-WindowsImage Path [$ApplyPath] and System: [$ApplySys]"
     if ( -not $ApplySys ) { $ApplySys = $ApplyPath }
@@ -65,15 +67,46 @@ function Convert-WIMtoVHD
         
     $LogArgs = Get-NewDismArgs
     write-verbose "Expand-WindowsImage Path [$ApplyPath]"
-    Expand-WindowsImage -ApplyPath "$ApplyPath\" @StdArgs @LogArgs | Out-String | Write-Verbose
+    if ( $Turbo )
+    {
+        if ( $Name ) 
+        {
+            & dism.exe /Apply-Image "/ImageFile:$($ImagePath)" "/ApplyDir:$ApplyPath\" /logpath:$($LogArgs.LogPath) "/Name:$Name" /LogLevel:3 
+        }
+        else
+        {
+            & dism.exe /Apply-Image "/ImageFile:$($ImagePath)" "/ApplyDir:$ApplyPath\" /logpath:$($LogArgs.LogPath) "/Index:$Index" /LogLevel:3 
+        }
+    }
+    else
+    {
+        Expand-WindowsImage -ApplyPath "$ApplyPath\" @StdArgs @LogArgs | Out-String | Write-Verbose
+    }
 
     ########################################################
 
-    write-verbose "Additional Content here!   param( $TargetDisk, $TargetDrive, $Aux ) "
+    foreach ( $Package in $Packages )
+    {
+        $LogArgs = Get-NewDismArgs
+        write-verbose "Add PAckages $ImagePath"
+
+        if ( $Turbo )
+        {
+            & dism.exe "/image:$ApplyPath\" /Add-Package "/PackagePath:$Package" /logpath:$($LogArgs.LogPath) /LogLevel:3 
+
+        }
+        else
+        {
+            Add-WindowsPackage -PackagePath $Package -Path "$ApplyPath\" @LogArgs -NoRestart | Out-String | Write-Verbose
+        }
+    }
+
+    ########################################################
 
     if ( $AdditionalContent )
     {
-        Invoke-Command -ScriptBlock $AdditionalContent -ArgumentList $newDisk,$ApplySys, $aux
+        write-verbose "Additional Content here!   param( $ApplyPath, $srcOSPath, $Aux ) "
+        Invoke-Command -ScriptBlock $AdditionalContent -ArgumentList $ApplyPath, (split-path (split-path $ImagePath)), $aux
     }
 
     ########################################################
@@ -90,7 +123,15 @@ function Convert-WIMtoVHD
     }
     start-CommandHidden -FilePath $ApplyPath\Windows\System32\bcdboot.exe -ArgumentList $BCDBootArgs | write-verbose
 
-    if ( -not ( test-path "$ApplySys\boot\memtest.exe" ) ) { throw "missing $ApplySys\boot\memtest.exe" }
+    if ( $Generation -eq 1)
+    {
+        if ( -not ( test-path "$ApplySys\boot\memtest.exe" ) ) { throw "missing $ApplySys\boot\memtest.exe" }
+    }
+    else
+    {
+        if ( -not ( test-path "$ApplySys\EFI\Microsoft\Boot\memtest.efi" ) ) { throw "missing $ApplySys\EFI\Microsoft\Boot\memtest.efi" }
+    }
+
 
     write-verbose "Convert-WIMtoVHD FInished"
 

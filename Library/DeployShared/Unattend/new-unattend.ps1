@@ -158,7 +158,7 @@ FUNCTION ELEMENT
     }
     else
     {
-        throw "Does not contain either a Value or a Scirptblock"
+        write-warning "Does not contain either a Value or a Scirptblock"
     }
 
 }

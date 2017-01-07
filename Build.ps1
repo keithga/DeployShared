@@ -53,7 +53,7 @@ Foreach ( $libPath in get-childitem -path $PSscriptRoot\Library -Directory )
 {
     Write-Verbose "if not exist $($libPath.FullName)\*.psm1, then create"
 
-    $FileList = get-childitem -path $libPath.FullName *.ps1 -recurse | %{ (split-path -leaf (split-path $_.fullname )) + "\" + ( split-path -leaf $_ )}
+    $FileList = get-childitem -path $libPath.FullName *.ps1 -recurse | where-object name -notmatch 'tests.ps1' | %{ (split-path -leaf (split-path $_.fullname )) + "\" + ( split-path -leaf $_ )}
     $ModuleName = Get-ChildItem "$($libPath.FullName)\*.psm1" | Select-Object -ExpandProperty Name -First 1
     $ManifestName = Get-ChildItem "$($libPath.FullName)\*.psd1" | Select-Object -ExpandProperty Name -First 1
 

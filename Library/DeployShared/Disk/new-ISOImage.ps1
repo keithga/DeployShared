@@ -1,6 +1,7 @@
 
 function New-ISOImage
 {
+    [cmdletbinding()]
     param
     (
         [parameter(Mandatory=$true)]
@@ -9,7 +10,7 @@ function New-ISOImage
         [parameter(Mandatory=$true)]
         [string] $ISOTarget,
 
-        [parameter(Mandatory=$true)]
+        [parameter(Mandatory=$false)]
         [ValidateSet("EFISys", "EFISys_noprompt")]
         [string] $EFIBoot
     )
@@ -23,8 +24,8 @@ function New-ISOImage
         $BootData = """-bootdata:2#p0,e,b$OSCDPath\etfsboot.com#pEF,e,b$OSCDPath\$($EFIBOOT).bin"""
     }
 
-    write-verbose  "$OSCDPath\oscdimg.exe -u2 -udfver102 -m -o -h -w4 '$BootData' $ISOSource $isotarget"
-    &               $OSCDPath\oscdimg.exe -u2 -udfver102 -m -o -h -w4 "$BootData" $ISOSource $isotarget  | Out-String | write-verbose
+    write-verbose  "$OSCDPath\oscdimg.exe -u2 -udfver102 -m -o -h -w4 '$BootData' $SourcePath $ISOTarget"
+    &               $OSCDPath\oscdimg.exe -u2 -udfver102 -m -o -h -w4 "$BootData" $SourcePath $ISOTarget  | Out-String | write-verbose
 
     write-verbose "Grant Permissions for file (for Hyper-V, just in case)."
     & icacls.exe $ISOTarget /grant Everyone:F    | Out-String | write-verbose
