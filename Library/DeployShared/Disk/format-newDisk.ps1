@@ -27,8 +27,7 @@ function Format-NewDisk
     $PartType = 'mbr'
     $ReType = 'set id=27'
     $SysType = 'primary'
-    if ( $Generation -eq 2 )
-    {
+    if ( $Generation -eq 2 ) {
         $PartType = 'gpt'
         $ReType = 'set id="de94bba4-06d1-4d40-a16a-bfd50179d6ac"','gpt attributes=0x8000000000000001'
         $SysType = 'efi'
@@ -38,25 +37,19 @@ function Format-NewDisk
 
     $DiskPartCmds = @( "list disk","select disk $DiskID","clean","convert $PartType" )
 
-    if ( $WinRE )
-    {
+    if ( $WinRE ) {
         $DiskPartCmds += "rem == Windows RE tools partition ============"
-        $DiskPartCmds += "create partition primary size=350",'format quick fs=ntfs label="Windows RE tools"'
-        # NO need to assign the WinRE Partition, Windows will auto mount during Setup.
-        # $DiskPartCmds += "assign"
+        $DiskPartCmds += "create partition primary size=350",'assign','format quick fs=ntfs label="Windows RE tools"'
         $DiskPartCmds += $ReType
     }
 
-    if ( $Generation -eq 2 -or $System )
-    {
+    if ( $Generation -eq 2 -or $System ) {
         $DiskPartCmds += "rem == System partition ======================"
-        $DiskPartCmds += "create partition $SysType size=350", 'format quick fs=fat32 label="System"'
-        $DiskPartCmds += "assign"
+        $DiskPartCmds += "create partition $SysType size=350",'assign','format quick fs=fat32 label=System'
         if ( $Generation -ne 2 ) { $DiskPartCmds += "active" }
     }
 
-    if ( $Generation -eq 2 ) 
-    {
+    if ( $Generation -eq 2 ) {
         $DiskPartCmds += "rem == Microsoft Reserved (MSR) partition ====","create partition msr size=128"
     }
 
@@ -64,14 +57,14 @@ function Format-NewDisk
     $DiskPartCmds += "create partition primary"
 
     $DiskPartCmds += "rem == Create space for the recovery image ==="
-    if ($Recovery) { $DiskPartCmds += "shrink minimum=" + ( ($RecoverySize / 1MB) -as [int] ) }
-    $DiskPartCmds += "format quick fs=ntfs label=""Windows""","assign"
+    if ($Recovery) {
+         $DiskPartCmds += "shrink minimum=" + ( ($RecoverySize / 1MB) -as [int] )
+    }
+    $DiskPartCmds += "assign","format quick fs=ntfs label=Windows"
 
-    if ( $Recovery )
-    {
+    if ( $Recovery ) {
         $DiskPartCmds += "rem == Recovery image partition =============="
-        $DiskPartCmds += "create partition primary",'format quick fs=ntfs label="Recovery image"'
-        # $DiskPartCmds += "assign"
+        $DiskPartCmds += "create partition primary",'assign','format quick fs=ntfs label="Recovery image"'
         $DiskPartCmds += $ReType
     }
 

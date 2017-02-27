@@ -1,11 +1,16 @@
 function get-VMBiosGuid ( $VM )
 {
 
-    $newVM = get-VM $VM
+    if ( $vm -is [Microsoft.HyperV.PowerShell.VirtualMachine] ) {
+        $newVM = $vm
+    }
+    else {
+        $newVM = get-vm $vm
+    }
 
-    if ( -not $NewVM ) { throw "Virtual Machine not found!" }
+    if ( $NewVM -isnot [Microsoft.HyperV.PowerShell.VirtualMachine] ) { throw "Virtual Machine not found!" }
 
-    (get-wmiobject -Namespace "Root\virtualization\v2" -class Msvm_VirtualSystemSettingData -Property BIOSGUID -Filter ("InstanceID = 'Microsoft:{0}'" -f $NewVM.VMId.Guid)).BIOSGUID.SubString(1,36) | Out-Default
+    get-wmiobject -Namespace "Root\virtualization\v2" -class Msvm_VirtualSystemSettingData | Where-Object ConfigurationID -eq $NewVM.VMId.Guid | ForEach-Object { $_.BIOSGUID.Trim('{}') }
 
 }
 

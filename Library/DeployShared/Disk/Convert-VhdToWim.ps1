@@ -12,7 +12,7 @@ function Convert-VHDtoWIM
         # [string] $Description,
         [ValidateSet("Fast", "Max", "None")]
         [string] $CompressionType = 'fast',
-        [switch] $Turbo,
+        [switch] $Turbo = $true,
         [switch] $Force
     )
 
@@ -45,9 +45,13 @@ function Convert-VHDtoWIM
 
     if ( $Turbo )
     {
-        
+
         write-Verbose "Capture Windows Image /ImageFile:$ImagePath /CaptureDir:$CapturePath"
-        & dism.exe /capture-image "/ImageFile:$ImagePath" "/CaptureDir:$CapturePath" "/Name:$Name" "/Compress:$CompressionType" "/ConfigFile:C:\Program Files\Microsoft Deployment Toolkit\Templates\Wimscript.ini"
+        $Command = "/capture-image ""/ImageFile:$ImagePath"" ""/CaptureDir:$CapturePath"" ""/Name:$Name"" /Compress:$CompressionType"
+        if ( Test-Path "C:\Program Files\Microsoft Deployment Toolkit\Templates\Wimscript.ini") { 
+            $Commmand = $Command + " ""/ConfigFile:C:\Program Files\Microsoft Deployment Toolkit\Templates\Wimscript.ini"""
+        }
+        invoke-dism @LogArgs -ArgumentList $Command
 
     }
     else

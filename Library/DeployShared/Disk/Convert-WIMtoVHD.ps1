@@ -15,7 +15,9 @@ function Convert-WIMtoVHD
         [int]    $Generation = 1,
         [uint64]  $SizeBytes = 120GB,
         [string[]] $Packages,
-        [switch] $Turbo,
+        [switch] $DotNet3,
+        [string[]] $Features,
+        [switch] $Turbo = $true,
         [scriptblock] $AdditionalContent,
         $Aux,
         [switch] $Force
@@ -69,18 +71,63 @@ function Convert-WIMtoVHD
     write-verbose "Expand-WindowsImage Path [$ApplyPath]"
     if ( $Turbo )
     {
-        if ( $Name ) 
-        {
-            & dism.exe /Apply-Image "/ImageFile:$($ImagePath)" "/ApplyDir:$ApplyPath\" /logpath:$($LogArgs.LogPath) "/Name:$Name" /LogLevel:3 
-        }
-        else
-        {
-            & dism.exe /Apply-Image "/ImageFile:$($ImagePath)" "/ApplyDir:$ApplyPath\" /logpath:$($LogArgs.LogPath) "/Index:$Index" /LogLevel:3 
-        }
+
+        write-Verbose "Apply Windows Image /ImageFile:$ImagePath /ApplyDir:$ApplyPath"
+
+        $Command = "/Apply-Image ""/ImageFile:$ImagePath"" ""/ApplyDir:$ApplyPath"""
+        if ( $Name ) { $Command = $Command + " ""/Name:$Name""" } else { $Command = $Command + " /Index:$Index" }
+        invoke-dism @LogArgs -ArgumentList $Command
+
     }
     else
     {
         Expand-WindowsImage -ApplyPath "$ApplyPath\" @StdArgs @LogArgs | Out-String | Write-Verbose
+    }
+
+    ########################################################
+
+    $OSSrcPath = split-path (split-path $ImagePath)
+    $OSSrcPath | out-string | write-verbose
+
+    if ( $DotNet3 ) {
+        write-verbose "Install .net Framework 3"
+
+        foreach ( $Package in "$OSSrcPath\sources\sxs\microsoft-windows-netfx3-ondemand-package.cab" )
+        {
+            $LogArgs = Get-NewDismArgs
+            if ( $Turbo )
+            {
+                $Command = " /image:$ApplyPath\ /Add-Package ""/PackagePath:$Package"""
+                invoke-dism @LogArgs -ArgumentList $Command
+            }
+            else
+            {
+                Add-WindowsPackage -PackagePath $Package -Path "$ApplyPath\" @LogArgs -NoRestart | Out-String | Write-Verbose
+            }
+        }
+
+    }
+
+    ########################################################
+
+    foreach ( $Feature in $Features )
+    {
+        $LogArgs = Get-NewDismArgs
+        write-verbose "Add Feature $Feature"
+
+
+        if ( $Turbo )
+        {
+            $Command = " /image:$ApplyPath\ /Enable-Feature /All ""/FeatureName:$Feature"" ""/Source:$OSSrcPath"""
+            invoke-dism @LogArgs -ArgumentList $Command
+        }
+        else
+        {
+            Enable-WindowsOptionalFeature -FeatureName $Feature -all -LimitAccess -path $ApplyPath -Source $OSSrcPath @DISMArgs
+        }
+
+        $Features | out-string | Write-verbose
+
     }
 
     ########################################################
@@ -92,8 +139,8 @@ function Convert-WIMtoVHD
 
         if ( $Turbo )
         {
-            & dism.exe "/image:$ApplyPath\" /Add-Package "/PackagePath:$Package" /logpath:$($LogArgs.LogPath) /LogLevel:3 
-
+            $Command = " /image:$ApplyPath\ /Add-Package ""/PackagePath:$Package"""
+            invoke-dism @LogArgs -ArgumentList $Command
         }
         else
         {
@@ -115,7 +162,7 @@ function Convert-WIMtoVHD
 
     if ( $Generation -eq 1)
     {
-        $BCDBootArgs = "$ApplyPath\Windows","/s","$ApplySys","/v"  # ,"/F","BIOS"
+        $BCDBootArgs = "$ApplyPath\Windows","/s","$ApplySys","/v","/F","BIOS"
     }
     else
     {
@@ -123,13 +170,14 @@ function Convert-WIMtoVHD
     }
     start-CommandHidden -FilePath $ApplyPath\Windows\System32\bcdboot.exe -ArgumentList $BCDBootArgs | write-verbose
 
+    start-sleep 5
     if ( $Generation -eq 1)
     {
-        if ( -not ( test-path "$ApplySys\boot\memtest.exe" ) ) { throw "missing $ApplySys\boot\memtest.exe" }
+        if ( -not ( test-path "$ApplySys\boot\memtest.exe" ) ) { write-warning "missing $ApplySys\boot\memtest.exe" }
     }
     else
     {
-        if ( -not ( test-path "$ApplySys\EFI\Microsoft\Boot\memtest.efi" ) ) { throw "missing $ApplySys\EFI\Microsoft\Boot\memtest.efi" }
+        if ( -not ( test-path "$ApplySys\EFI\Microsoft\Boot\memtest.efi" ) ) { write-warning "missing $ApplySys\EFI\Microsoft\Boot\memtest.efi" }
     }
 
 
