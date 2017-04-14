@@ -43,8 +43,8 @@
 	</Fragment>
 
 	<Fragment>
-		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-			<Component Id="CFile00001">
+		<ComponentGroup Id="ProductComponents">
+			<Component Id="CFile00001" Directory="BIN_Folder">
 				<File Id="FileEula" Source="..\EULA.rtf" KeyPath="yes" Checksum="yes"/>
 				<RegistryKey Id="Deployment4_Key" Root="HKLM" Key="Software\Microsoft\Deployment 4" Action="createAndRemoveOnUninstall" >
 					<RegistryValue Id="MDTEx1" Name="Install_Dir" Action="write" Type="string" Value="[INSTALLFOLDER]" />
@@ -53,11 +53,11 @@
 			</Component>
 		</ComponentGroup>
 
-		<ComponentGroup Id="BinComponents" Directory="BIN_Folder">
-			<Component Id="CFile00002">
+		<ComponentGroup Id="BinComponents">
+			<Component Id="CFile00002" Directory="BIN_Folder">
 				<File Id="FileAbout" Source="..\About.txt" KeyPath="yes" Checksum="yes"/>
 			</Component>
-			<Component Id="CFile00003">
+			<Component Id="CFile00003" Directory="BIN_Folder">
 				<File Id="FileHydrate" Source="..\..\Bin\PowerShell Wizard Host.exe" Name="MDTExHydrate.exe" KeyPath="yes" Checksum="yes"/>
 			</Component>
 		</ComponentGroup>

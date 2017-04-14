@@ -104,21 +104,16 @@ Export-ModuleMember -Function *
 
 #endregion 
 
-
-exit
-
-
-
 #region Create Wizard
 ##############################################################################
 Write-Verbose "Create Wizard"
 
-if ( -not ( Test-Path $PSScriptROot\..\..\PS2Wiz\PS2Wiz.ps1 ) ) { throw "Missing PS2Wiz.ps1  http://ps2wiz.codeplex.com" }
+if ( -not ( Test-Path $PSScriptROot\..\PS2Wiz\PS2Wiz.ps1 ) ) { throw "Missing PS2Wiz.ps1  http://ps2wiz.codeplex.com" }
 
 New-Item -ItemType Directory -Force -Path $PSScriptRoot\Bin -ErrorAction SilentlyContinue | Out-Null
 
-& "$PSScriptRoot\..\..\PS2Wiz\PS2Wiz.ps1" -verbose "$PSScriptRoot\setup\Hydrate.ps1" -OutputFolder "$PSScriptRoot\bin" -Admin
-& "$PSScriptRoot\..\..\PS2Wiz\PS2Wiz.ps1" -verbose "$PSScriptRoot\setup\Hydrate.ps1" -Target Clean
+& "$PSScriptRoot\..\PS2Wiz\PS2Wiz.ps1" -verbose "$PSScriptRoot\setup\Hydrate.ps1" -OutputFolder "$PSScriptRoot\bin" -Admin
+& "$PSScriptRoot\..\PS2Wiz\PS2Wiz.ps1" -verbose "$PSScriptRoot\setup\Hydrate.ps1" -Target Clean
 
 #endregion
 
@@ -175,6 +170,10 @@ if ( $test -or $Run)
 
     Write-verbose "Copy Scripts to Host for testing  $PSScriptRoot\test\HostTest  $($ScriptXML.HostShare)"
     new-psdrive -Name TestTarget -PSProvider FileSystem -root $ScriptXML.HostShare -Credential $scriptxml.HostCredentials | out-string | Write-verbose
+    if ( -not ( test-path "$($ScriptXML.HostShare)\Staging" ) ) 
+    {
+        new-item -ItemType Directory "$($ScriptXML.HostShare)\Staging" -Force
+    }
     copy-item $PSScriptRoot\test\HostTest\* "$($ScriptXML.HostShare)\Staging" -Recurse -Force | out-string | Write-verbose
     copy-item $MsiPackage "$($ScriptXML.HostShare)\Staging" -Force | out-string | Write-verbose
 
