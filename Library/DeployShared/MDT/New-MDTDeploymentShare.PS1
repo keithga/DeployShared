@@ -29,7 +29,7 @@ function New-MDTDeploymentShare
 
         [string] $DPDrive = "DS001",
 
-        [string] $SourcePath = "$PsScriptROot\..\..\templates\Distribution",
+        [string] $SourcePath = "$PsScriptROot\..\..\..\templates\Distribution",
 
         [parameter(ValueFromRemainingArguments=$true)] $Remaining
 

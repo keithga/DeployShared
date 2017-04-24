@@ -64,8 +64,7 @@ if ( -not [environment]::Is64BitOperatingSystem )
 remove-module MDT,WIndows,MicrosoftDeploymentToolkit -force -ErrorAction SilentlyContinue
 
 Import-Module "$env:ProgramFiles\Microsoft Deployment Toolkit\bin\MicrosoftDeploymentToolkit.psd1"
-Import-Module "$PSScriptRoot\..\Library\MDT"
-Import-Module "$PSScriptRoot\..\Library\Windows" 
+Import-Module "$PSScriptRoot\..\Library\DeployShared"
 
 #endregion
 
