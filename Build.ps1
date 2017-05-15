@@ -20,6 +20,7 @@ https://github.com/keithga/DeployShared
 param(
     [string] $ScriptVars = "$PSScriptRoot\test\ScriptBlock.xml",
     [switch] $test,
+    [switch] $LibOnly,
     [switch] $Run,
     [switch] $asJob
 )
@@ -101,6 +102,8 @@ Export-ModuleMember -Function *
     }
 
 }
+
+if ( $LibOnly ) { exit }
 
 #endregion 
 

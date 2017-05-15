@@ -1,11 +1,12 @@
-
-function Format-NewDisk
-{
+function Format-NewDisk {
     <# 
-    Foramt a disk in canonical way.
-
-    We use diskpart for format the new VHD(x), rather than native powershell commands due to uEFI limitations in PowerShell
-    http://www.altaro.com/hyper-v/creating-generation-2-disk-powershell/
+    Foramt a disk for Windows 10.
+    
+    Some Notes:
+    * Do not use "Recovery Partitions" since they are not used in Windows 10.
+    * This function will return a hash table of the WinRE, Windows, and System partitions.
+    * System and WinRE are hard coded to 350MB
+    * You should call Format-NewDiskFinalize to make WinRE and System Partitions hidden.
 
     #>
 
@@ -15,69 +16,75 @@ function Format-NewDisk
         [ValidateRange(1,20)]
         [int] $DiskID,
 
-        [ValidateRange(1,2)]
-        [int] $Generation = 1,
+        [switch] $GPT,
 
         [switch] $System = $True,
-        [switch] $WinRE,
-        [switch] $Recovery,
-        [uint64] $recoverysize = 8GB
+        [switch] $WinRE = $True
     )
 
-    $PartType = 'mbr'
-    $ReType = 'set id=27'
-    $SysType = 'primary'
-    if ( $Generation -eq 2 ) {
-        $PartType = 'gpt'
-        $ReType = 'set id="de94bba4-06d1-4d40-a16a-bfd50179d6ac"','gpt attributes=0x8000000000000001'
-        $SysType = 'efi'
+    ################
+    write-verbose "Clear the disk($DiskID)"
+    Get-Disk -Number $DiskID | where-object PartitionStyle -ne 'RAW' | Clear-Disk -RemoveData -RemoveOEM -Confirm:$False
+
+    if ( get-Disk -Number $DiskID | where-object PartitionStyle -eq 'RAW' ) {
+        write-verbose "Initialize the disk($DiskID)"
+        if ($GPT) {
+            initialize-disk -Number $DiskID -PartitionStyle GPT -Confirm:$true
+        }
+        else {
+            initialize-disk -Number $DiskID -PartitionStyle MBR -Confirm:$true
+        }
     }
 
-    write-verbose "Create Diskpart Commands"
-
-    $DiskPartCmds = @( "list disk","select disk $DiskID","clean","convert $PartType" )
-
+    ################
+    $WinREPartition = $null
     if ( $WinRE ) {
-        $DiskPartCmds += "rem == Windows RE tools partition ============"
-        $DiskPartCmds += "create partition primary size=350",'assign','format quick fs=ntfs label="Windows RE tools"'
-        $DiskPartCmds += $ReType
+        write-verbose "Create Windows RE tools partition of 350MB"
+        $WinREPartition = New-Partition -DiskNumber $DiskID -Size 350MB -AssignDriveLetter:$False | 
+            Format-Volume -FileSystem NTFS -NewFileSystemLabel 'Windows RE Tools' -Confirm:$False |
+            Get-Partition 
+        if ( $GPT ) {
+            $WinREPartition | Set-Partition -GptType '{de94bba4-06d1-4d40-a16a-bfd50179d6ac}'
+        }
     }
 
-    if ( $Generation -eq 2 -or $System ) {
-        $DiskPartCmds += "rem == System partition ======================"
-        $DiskPartCmds += "create partition $SysType size=350",'assign','format quick fs=fat32 label=System'
-        if ( $Generation -ne 2 ) { $DiskPartCmds += "active" }
+    ################
+    $SystemPartition = $null
+    if ( $GPT -or $System ) {
+        write-verbose "Create System Partition of 350MB"
+        $SystemPartition = New-Partition -DiskNumber $DiskID -Size 350MB -AssignDriveLetter:$false | 
+            Format-Volume -FileSystem FAT32 -NewFileSystemLabel 'System' -Confirm:$False | 
+            Get-Partition | 
+            Add-PartitionAccessPath -AssignDriveLetter -PassThru
     }
 
-    if ( $Generation -eq 2 ) {
-        $DiskPartCmds += "rem == Microsoft Reserved (MSR) partition ====","create partition msr size=128"
+    ################
+    if ( $GPT ) {
+        write-Verbose "Create MSR partition of 128MB"
+        New-Partition -DiskNumber $DiskID -GptType '{e3c9e316-0b5c-4db8-817d-f92df00215ae}' -Size 128MB | Out-Null
     }
 
-    $DiskPartCmds += "rem == Windows partition ====================="
-    $DiskPartCmds += "create partition primary"
+    ################
+    write-verbose "Create Windows Partition (MAX)"
+    $WindowsPartition = New-Partition -DiskNumber $DiskID -UseMaximumSize -AssignDriveLetter:$False |
+        Format-Volume -FileSystem NTFS -NewFileSystemLabel 'Windows' -Confirm:$False |
+        Get-Partition |
+        Add-PartitionAccessPath -AssignDriveLetter -PassThru
 
-    $DiskPartCmds += "rem == Create space for the recovery image ==="
-    if ($Recovery) {
-         $DiskPartCmds += "shrink minimum=" + ( ($RecoverySize / 1MB) -as [int] )
+    ################
+    if ( -not $SystemPartition ) {
+        write-verbose "Let System Partition be the Windows Partition"
+        $SystemPartition = $WindowsPartition
     }
-    $DiskPartCmds += "assign","format quick fs=ntfs label=Windows"
-
-    if ( $Recovery ) {
-        $DiskPartCmds += "rem == Recovery image partition =============="
-        $DiskPartCmds += "create partition primary",'assign','format quick fs=ntfs label="Recovery image"'
-        $DiskPartCmds += $ReType
+    if ( -not $GPT ) {
+        write-verbose "Set the System partition active"
+        $SystemPartition | Set-Partition -IsActive:$true
     }
 
-    $DiskPartCmds += "list volume","exit" 
-
-    write-verbose "Closeout Diskpart Commands"
-    $DiskPArtCmds | write-verbose
-
-    $ShellHWDetection = get-Service -Name ShellHWDetection
-    if ( $ShellHWDetection.Status -eq 'Running' ) { Stop-service -name ShellHWDetection }
-
-    Invoke-DiskPart -Commands $DiskPartCmds | Write-Output
-
-    if ( $ShellHWDetection.Status -eq 'Running' ) { Start-service -name ShellHWDetection }
+    @{
+        SystemPartition = $SystemPartition 
+        WindowsPartition = $WindowsPartition 
+        WinREPartition = $WinREPartition
+    } | Write-Output
 
 }

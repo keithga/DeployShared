@@ -45,16 +45,10 @@ function Convert-WIMtoVHD
 
     Write-Verbose "Initialize Disk"
 
-    Format-NewDisk -DiskID $NEwDiskNumber -Generation $Generation | write-verbose
+    $ReadyDisk = Format-NewDisk -DiskID $NEwDiskNumber -GPT:$GPT
+    $ApplyPath = $ReadyDisk.WindowsPartition | get-Volume | Foreach-object { $_.DriveLetter + ":" }
+    $ApplySys = $ReadyDisk.SystemPartition | Get-Volume | Foreach-object { $_.DriveLetter + ":" }
 
-    $ApplyPath = $NewDisk | get-partition | get-volume | where-object FileSystem -eq 'NTFS' | 
-        sort -Property Size | Select-Object -last 1 | Foreach-object { $_.DriveLetter + ":" }
-
-    $ApplySys = $NewDisk | get-partition | where-object { ($_.Type -eq 'System') -or ( $_.Type -eq 'FAT32 XINT13') } | Foreach-object { $_.DriveLetter + ":" }
-    #$ApplySys = $NewDisk | get-partition | get-volume | where-object FileSystemLabel -eq 'SYSTEM' | Foreach-object { $_.DriveLetter + ":" }
-    
-    write-verbose "Expand-WindowsImage Path [$ApplyPath] and System: [$ApplySys]"
-    if ( -not $ApplySys ) { $ApplySys = $ApplyPath }
     write-verbose "Expand-WindowsImage Path [$ApplyPath] and System: [$ApplySys]"
 
     ########################################################
@@ -180,6 +174,8 @@ function Convert-WIMtoVHD
         if ( -not ( test-path "$ApplySys\EFI\Microsoft\Boot\memtest.efi" ) ) { write-warning "missing $ApplySys\EFI\Microsoft\Boot\memtest.efi" }
     }
 
+    Write-Verbose "Finalize Disk"
+    Format-NewDiskFinalize @ReadyDisk
 
     write-verbose "Convert-WIMtoVHD FInished"
 
