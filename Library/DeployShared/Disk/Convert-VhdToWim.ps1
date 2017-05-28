@@ -16,7 +16,7 @@ function Convert-VHDtoWIM
         [switch] $Force
     )
 
-    Write-Verbose "WIM [$ImagePath]  to VHD [$VHDFile]"
+    Write-Verbose "WIM [$ImagePath]  FROM  VHD [$VHDFile]"
     Write-Verbose "SizeBytes=$SIzeBytes  Generation:$Generation Force: $Force Index: $Index"
 
     ####################################################
@@ -27,7 +27,7 @@ function Convert-VHDtoWIM
     $NewDisk | Out-String | Write-Verbose
     $NewDiskNumber = Get-VHD $VhdFile | Select-Object -ExpandProperty DiskNumber
 
-    if ( -not ( Get-VHD $VhdFile | Select-Object -ExpandProperty DiskNumber ) )
+    if ( -not $NewDiskNumber )
     {
         throw "Unable to Mount VHD File"
     }
@@ -36,6 +36,13 @@ function Convert-VHDtoWIM
 
     $CapturePath = $NewDisk | get-partition | get-volume | where-object FileSystem -eq 'NTFS' | 
         sort -Property Size | Select-Object -last 1 | Foreach-object { $_.DriveLetter + ":" }
+
+    if ( -not $CapturePath ) 
+    {
+        $newDisk | get-partition | where size -gt 32GB | select-object -first  1 | Add-PartitionAccessPath -AssignDriveLetter
+        $CapturePath = $NewDisk | get-partition | where-object { $_.DriveLetter } | 
+            sort -Property Size | Select-Object -last 1 | Foreach-object { $_.DriveLetter + ":" }
+    }
 
     write-verbose "Capture Path: $CapturePath"
 

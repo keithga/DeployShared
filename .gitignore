@@ -216,7 +216,5 @@ Hydrate.wxs
 Library.wxs
 Templates.wxs
 /Templates.Common
-DeployShared.psd1
-DeployShared.psm1
 DeploySharedCRC.xml
 

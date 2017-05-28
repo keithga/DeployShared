@@ -45,7 +45,7 @@ function Convert-WIMtoVHD
 
     Write-Verbose "Initialize Disk"
 
-    $ReadyDisk = Format-NewDisk -DiskID $NEwDiskNumber -GPT:$GPT
+    $ReadyDisk = Format-NewDisk -DiskID $NEwDiskNumber -GPT:($Generation -eq 2)
     $ApplyPath = $ReadyDisk.WindowsPartition | get-Volume | Foreach-object { $_.DriveLetter + ":" }
     $ApplySys = $ReadyDisk.SystemPartition | Get-Volume | Foreach-object { $_.DriveLetter + ":" }
 
@@ -65,7 +65,6 @@ function Convert-WIMtoVHD
     write-verbose "Expand-WindowsImage Path [$ApplyPath]"
     if ( $Turbo )
     {
-
         write-Verbose "Apply Windows Image /ImageFile:$ImagePath /ApplyDir:$ApplyPath"
 
         $Command = "/Apply-Image ""/ImageFile:$ImagePath"" ""/ApplyDir:$ApplyPath"""
@@ -83,19 +82,43 @@ function Convert-WIMtoVHD
     $OSSrcPath = split-path (split-path $ImagePath)
     $OSSrcPath | out-string | write-verbose
 
+    ########################################################
+
+    foreach ( $Package in $Packages ) {
+        $LogArgs = Get-NewDismArgs
+        write-verbose "Add PAckages $Package"
+
+        if ( $Turbo ) {
+            $Command = " /image:$ApplyPath\ /Add-Package ""/PackagePath:$Package"""
+            invoke-dism @LogArgs -ArgumentList $Command
+        }
+        else {
+            Add-WindowsPackage -PackagePath $Package -Path "$ApplyPath\" @LogArgs -NoRestart | Out-String | Write-Verbose
+        }
+    }
+
+    ########################################################
+
+    if ( $cleanup )  {
+        $LogArgs = Get-NewDismArgs
+        write-verbose "Cleanup Image"
+        invoke-dism @LogArgs -ArgumentList "/Cleanup-image /image:$ApplyPath\ /analyzecomponentstore"
+        invoke-dism @LogArgs -ArgumentList "/Cleanup-Image /image:$ApplyPath\ /StartComponentCleanup /ResetBase"
+        invoke-dism @LogArgs -ArgumentList "/Cleanup-image /image:$ApplyPath\ /analyzecomponentstore"
+    }
+
+    ########################################################
+
     if ( $DotNet3 ) {
         write-verbose "Install .net Framework 3"
 
-        foreach ( $Package in "$OSSrcPath\sources\sxs\microsoft-windows-netfx3-ondemand-package.cab" )
-        {
+        foreach ( $Package in "$OSSrcPath\sources\sxs\microsoft-windows-netfx3-ondemand-package.cab" ) {
             $LogArgs = Get-NewDismArgs
-            if ( $Turbo )
-            {
+            if ( $Turbo ) {
                 $Command = " /image:$ApplyPath\ /Add-Package ""/PackagePath:$Package"""
                 invoke-dism @LogArgs -ArgumentList $Command
             }
-            else
-            {
+            else {
                 Add-WindowsPackage -PackagePath $Package -Path "$ApplyPath\" @LogArgs -NoRestart | Out-String | Write-Verbose
             }
         }
@@ -104,41 +127,16 @@ function Convert-WIMtoVHD
 
     ########################################################
 
-    foreach ( $Feature in $Features )
-    {
+    foreach ( $Feature in $Features ) {
         $LogArgs = Get-NewDismArgs
         write-verbose "Add Feature $Feature"
 
-
-        if ( $Turbo )
-        {
+        if ( $Turbo ) {
             $Command = " /image:$ApplyPath\ /Enable-Feature /All ""/FeatureName:$Feature"" ""/Source:$OSSrcPath"""
             invoke-dism @LogArgs -ArgumentList $Command
         }
-        else
-        {
+        else {
             Enable-WindowsOptionalFeature -FeatureName $Feature -all -LimitAccess -path $ApplyPath -Source $OSSrcPath @DISMArgs
-        }
-
-        $Features | out-string | Write-verbose
-
-    }
-
-    ########################################################
-
-    foreach ( $Package in $Packages )
-    {
-        $LogArgs = Get-NewDismArgs
-        write-verbose "Add PAckages $ImagePath"
-
-        if ( $Turbo )
-        {
-            $Command = " /image:$ApplyPath\ /Add-Package ""/PackagePath:$Package"""
-            invoke-dism @LogArgs -ArgumentList $Command
-        }
-        else
-        {
-            Add-WindowsPackage -PackagePath $Package -Path "$ApplyPath\" @LogArgs -NoRestart | Out-String | Write-Verbose
         }
     }
 
