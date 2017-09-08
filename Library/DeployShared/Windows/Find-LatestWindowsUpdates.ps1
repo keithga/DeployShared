@@ -1,5 +1,5 @@
 
-function List-LatestWindowsUpdates {
+function Find-LatestWindowsUpdates {
 
     <#
     .SYNOPSIS

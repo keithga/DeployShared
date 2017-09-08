@@ -160,7 +160,11 @@ function Convert-WIMtoVHD
     {
         $BCDBootArgs = "$ApplyPath\Windows","/s","$ApplySys","/v","/F","UEFI"
     }
-    start-CommandHidden -FilePath $ApplyPath\Windows\System32\bcdboot.exe -ArgumentList $BCDBootArgs | write-verbose
+
+    # http://www.codeease.com/create-a-windows-to-go-usb-drive-without-running-windows-8.html
+    Copy-Item $ApplyPath\Windows\System32\bcdboot.exe $env:temp\BCDBoot.exe
+
+    start-CommandHidden -FilePath $env:temp\BCDBoot.exe -ArgumentList $BCDBootArgs | write-verbose
 
     start-sleep 5
     if ( $Generation -eq 1)

@@ -7,6 +7,7 @@ function Format-NewDisk {
     * This function will return a hash table of the WinRE, Windows, and System partitions.
     * System and WinRE are hard coded to 350MB
     * You should call Format-NewDiskFinalize to make WinRE and System Partitions hidden.
+    * BUGBUG Does not work from Windows Server 2012R2 ( Repalce diskpart)
 
     #>
 
