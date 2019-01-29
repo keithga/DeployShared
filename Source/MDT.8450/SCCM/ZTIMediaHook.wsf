@@ -1,0 +1,141 @@
+<job id="ZTIMediaHook">
+	<script language="VBScript" src="ZTIUtility.vbs"/>
+	<script language="VBScript" src="ZTIDataAccess.vbs"/>
+	<script language="VBScript">
+
+' // ***************************************************************************
+' // 
+' // Copyright (c) Microsoft Corporation.  All rights reserved.
+' // 
+' // Microsoft Deployment Toolkit Solution Accelerator
+' //
+' // File:      ZTIMediaHook.wsf
+' // 
+' // Version:   6.3.8450.1000
+' // 
+' // Purpose:   Called by ConfigMgr when booting from media (Windows PE).
+' // 
+' // Usage:     cscript.exe [//nologo] ZTIMediaHook.wsf [/debug:true]
+' // 
+' // ***************************************************************************
+
+Option Explicit
+RunNewInstance
+
+
+'//----------------------------------------------------------------------------
+'//  Global Constants
+'//----------------------------------------------------------------------------
+
+' No global constants needed
+
+
+'//----------------------------------------------------------------------------
+'//  Main Class
+'//----------------------------------------------------------------------------
+
+Class ZTIMediaHook
+
+	'//----------------------------------------------------------------------------
+	'//  Class instance variable declarations
+	'//----------------------------------------------------------------------------
+
+	Dim iRetVal
+
+
+	'//----------------------------------------------------------------------------
+	'//  Constructor to initialize needed global objects
+	'//----------------------------------------------------------------------------
+
+	Private Sub Class_Initialize
+	
+	End Sub
+	
+	
+	'//----------------------------------------------------------------------------
+	'//  Main routine
+	'//----------------------------------------------------------------------------
+
+	Function Main
+
+		Dim iRetVal
+		Dim sCmd
+		Dim sBootstrap
+		Dim sAssignedSite
+		Dim iCount
+
+
+		' Initialization
+
+		iRetVal = Success
+		oEnvironment.Item("DeploymentMethod") = "SCCM"
+
+
+		'//----------------------------------------------------------------------------
+		'//  Gather information
+		'//----------------------------------------------------------------------------
+
+
+		' Process bootstrap rules
+
+		sCmd = "wscript.exe """ & oUtility.ScriptDir & "\ZTIGather.wsf"" /inifile:SCCM_Bootstrap.ini"
+		iRetVal = RunAndLog(sCmd, true)
+
+		If oEnvironment.Item("KeyboardLocale") <> "" then
+
+			sCmd = right("0000" & Hex(GetLocale),4) & ":" & right("00000000" & Hex(GetLocale), 8)
+			If UCase(oEnvironment.Item("KeyboardLocale")) <> UCase( sCmd ) then
+				sCmd = "wpeutil.exe SetKeyboardLayout " & oEnvironment.Item("KeyboardLocale")
+				RunAndLog sCmd, false
+			End if
+
+		End if
+
+
+		' Display the wizard if needed
+
+		If UCase(oEnvironment.Item("SkipWizard")) <> "YES" then
+
+			sCmd = "MSHTA.exe " & oUtility.ScriptDir & "\Wizard.hta /definition:Deploy_SCCM_Definition_ENU.xml"
+			RunAndLog sCmd, true
+
+		End if
+
+	End Function
+
+
+	Function RunAndLog(sCmd, bDebuggable)
+
+		Dim iRetVal
+		Dim iShow
+
+
+		If oLogging.Debug and bDebuggable then
+			sCmd = sCmd & " /debug:true"
+			iShow = 1
+		Else
+			iShow = 0
+		End if
+
+
+		oLogging.CreateEntry "About to run command: " & sCmd, LogTypeInfo
+
+		On Error Resume Next
+		iRetVal = oShell.Run(sCmd, iShow, true)
+		If Err then
+			iRetVal = Err.Number
+			oLogging.CreateEntry "ERROR executing command " & sCmd & ": " & Err.Description & " (" & Err.Number & ")", LogTypeError
+		ElseIf iRetVal = -2147021886 or iRetVal = 0 then
+			oLogging.CreateEntry "Successfully executed command " & sCmd & ", rc = " & CStr(iRetVal), LogTypeInfo
+		Else
+			TestAndLog iRetVal, "ZTIMediaHook: Non-zero return code executing command " & sCmd & ", rc = " & iRetVal
+		End if
+		RunAndLog = iRetVal
+		On Error Goto 0
+
+	End Function
+
+End Class
+
+	</script>
+</job>

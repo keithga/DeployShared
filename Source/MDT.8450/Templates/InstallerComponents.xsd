@@ -1,0 +1,47 @@
+<xsd:schema id="Components" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <xsd:element name="Component" type="componentType" />
+
+  <xsd:complexType name="componentType">
+    <xsd:sequence>
+      <xsd:element name="ShortDescription" type="xsd:string" />
+      <xsd:element name="LongDescription" type="xsd:string" />
+      <xsd:element name="MoreInfo" type="xsd:string" minOccurs="0" />
+      <xsd:element name="CommandLine" type="xsd:string" minOccurs="0" />
+      <xsd:element name="File" type="fileType" minOccurs="0" maxOccurs="unbounded" />
+      <xsd:element name="Dependency" type="xsd:string" minOccurs="0" maxOccurs="unbounded" />
+      <xsd:element name="OSVersion" type="osVersionType" minOccurs="0" />
+      <xsd:element name="InstalledCondition" type="conditionType" minOccurs="0" maxOccurs="unbounded" />
+    </xsd:sequence>
+    <xsd:attribute name="guid" type="xsd:string" />
+    <xsd:attribute name="enable" type="xsd:string" />
+    <xsd:attribute name="Architecture" type="xsd:string" />
+    <xsd:attribute name="DestinationPath" type="xsd:string" />
+    <xsd:attribute name="Required" type="xsd:string" />
+    <xsd:attribute name="ComponentVersion" type="xsd:string" />
+  </xsd:complexType>
+
+  <xsd:complexType name="fileType">
+    <xsd:attribute name="URL" type="xsd:string" />
+    <xsd:attribute name="FileName" type="xsd:string" />
+    <xsd:attribute name="FileSize" type="xsd:string" />
+    <xsd:attribute name="FileModified" type="xsd:string" />
+    <xsd:attribute name="Authenticode" type="xsd:string" />
+  </xsd:complexType>
+
+  <xsd:complexType name="osVersionType">
+    <xsd:attribute name="Min" type="xsd:string" />
+    <xsd:attribute name="Max" type="xsd:string" />
+  </xsd:complexType>
+
+  <xsd:complexType name="conditionType">
+    <xsd:attribute name="RegistryKey" type="xsd:string" />
+    <xsd:attribute name="RegistryValue" type="xsd:string" />
+    <xsd:attribute name="RegistryData" type="xsd:string" />
+    <xsd:attribute name="WMIQuery" type="xsd:string" />
+    <xsd:attribute name="Script" type="xsd:string" />
+    <xsd:attribute name="MinOS" type="xsd:string" />
+    <xsd:attribute name="MaxOS" type="xsd:string" />
+  </xsd:complexType>
+
+</xsd:schema>

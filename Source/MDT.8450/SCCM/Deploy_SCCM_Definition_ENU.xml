@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+
+' // ***************************************************************************
+' // 
+' // Copyright (c) Microsoft Corporation.  All rights reserved.
+' // 
+' // Microsoft Deployment Toolkit Solution Accelerator
+' //
+' // File:      Deploy_SCCM_Definition_ENU.xml
+' // 
+' // Version:   <VERSION>
+' // 
+' // Purpose:   Implements a wizard that is displayed during new computer
+' //            ConfigMgr deployments.
+' // 
+' // Usage:     (Loaded by Wizard.hta)
+' // 
+' // ***************************************************************************
+
+-->
+
+<Wizard>
+	<Global>
+
+		<CustomStatement><![CDATA[ document.title =  "Deployment Wizard" ]]> </CustomStatement>
+
+		<Initialization>Deploy_SCCM_Scripts.vbs</Initialization>
+
+	</Global>
+
+
+	<Pane id="ComputerName" title="Computer Name">
+		<Condition><![CDATA[UCase(Property("SkipComputerName"))<>"YES" and Property("DeploymentType")<>"REPLACE" and Property("DeploymentType")<>"CUSTOM" ]]></Condition>
+		<Initialization><![CDATA[InitializeComputerName]]> </Initialization>
+		<Body>
+		<![CDATA[
+
+    <H1>Configure the computer name.</H1>
+    <span style="width: 95%;">
+
+        <p>Choose a name for your PC that will help you identify it on your network, if you have one. Each computer on your network must have a unique name.</p>
+        <P>You can name your computer based on its owner or location, for example "DAVID" or "XYZLAB123." In order
+        for your computer to appear on a network, its name cannot be longer than 15 characters or contain any
+        spaces or characters aside from the numbers 0-9, the letters A-Z and a-z, and hyphens.</P>
+
+        <p><span class="Larger">Computer n<u class=larger>a</u>me:</span>
+        <input type=text id="OSDComputerName" name=OSDComputerName size=15 language=vbscript onpropertychange=ValidateComputerName AccessKey=A /></p>
+
+        <p>&nbsp;
+          <label class=ErrMsg for=OSDComputerName>* Required (MISSING)</label>
+          <label class=ErrMsg id=InvalidChar>Letters, Numbers & Dashes only!</label>
+          <label class=ErrMsg id=TooLong>Maximum of 15 characters!</label>
+        </p>
+
+        <!--  Computer Description Format -->
+        <!--
+
+        <p>You can also give your computer a friendly description. Unlike the computer
+        name, the computer description may contain spaces and other special characters. "Frank Kim's Test machine" and
+        "E-Mail Server #23, Miami Regional Office, Rm. 2305." are examples of computer descriptions.</p>
+
+        <p><span class="Larger">Computer <u class=larger>d</u>escription:</span><br/>
+        <input type=text id="Description" name=ComputerDescription size=60 language=vbscript onpropertychange=ValidateComputerName AccessKey=d /></p>
+        -->
+
+    </span>
+
+		]]>
+		</Body>
+		<Validation><![CDATA[ValidateComputerName]]></Validation>
+	</Pane>
+
+
+</Wizard>

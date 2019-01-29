@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<SmsTaskSequencePackage xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <BootImageID>CEN00003</BootImageID>
+  <Category />
+  <DependentProgram />
+  <Description />
+  <Duration>360</Duration>
+  <Name>Microsoft Deployment Custom Task Sequence</Name>
+  <ProgramFlags>152084496</ProgramFlags>
+  <SequenceData>
+    <sequence version="3.00">
+      <referenceList>
+        <reference package="CEN0001E" />
+        <reference package="CEN0001F" />
+      </referenceList>
+      <step type="BDD_UsePackage" name="Use Toolkit Package" description="" runIn="WinPEandFullOS" successCodeList="0">
+        <action>smsswd.exe /run:CEN0001E cscript.exe Scripts\ZTISCCM.wsf</action>
+        <defaultVarList>
+          <variable name="BDDPackageID" property="PackageID" hidden="true">CEN0001E</variable>
+        </defaultVarList>
+      </step>
+      <step type="BDD_Gather" name="Gather" description="" runIn="WinPEandFullOS" successCodeList="0">
+        <action>smsswd.exe /run:CEN0001F cscript.exe "%DeployRoot%\Scripts\ZTIGather.wsf"</action>
+        <defaultVarList>
+          <variable name="GatherLocalOnly" property="GatherLocalOnly">false</variable>
+          <variable name="PackageID" property="PackageID" hidden="true">CEN0001F</variable>
+          <variable name="RulesFile" property="RulesFile">customsettings.ini</variable>
+        </defaultVarList>
+      </step>
+      <step type="SMS_TaskSequence_InstallSoftwareAction" name="Install Software" description="" continueOnError="true" runIn="FullOS" successCodeList="0">
+        <action>smsswd.exe /pkg: /install /basevar:PACKAGES /continueOnError:True</action>
+        <defaultVarList>
+          <variable name="BaseVariableName" property="BaseVariableName" hidden="true">PACKAGES</variable>
+          <variable name="ContinueOnInstallError" property="ContinueOnInstallError" hidden="true">true</variable>
+        </defaultVarList>
+      </step>
+      <group name="Install Applications" description="">
+        <step type="SMS_TaskSequence_RunCommandLineAction" name="Convert list to two digits" description="" runIn="WinPEandFullOS" successCodeList="0 3010">
+          <action>smsswd.exe /run: cscript.exe "%deployroot%\scripts\ZTICoalesce.wsf" /CoalescePattern:Applications /CoalesceTarget:CoalescedApps /CoalesceDigits:2</action>
+          <defaultVarList>
+            <variable name="CommandLine" property="CommandLine" hidden="true">cscript.exe "%deployroot%\scripts\ZTICoalesce.wsf" /CoalescePattern:Applications /CoalesceTarget:CoalescedApps /CoalesceDigits:2</variable>
+            <variable name="SMSTSDisableWow64Redirection" property="DisableWow64Redirection">false</variable>
+            <variable name="SuccessCodes" property="SuccessCodes" hidden="true">0 3010</variable>
+          </defaultVarList>
+        </step>
+        <step type="SMS_TaskSequence_InstallApplicationAction" name="Install Application" description="" continueOnError="true" runIn="FullOS" successCodeList="0">
+          <action>smsappinstall.exe /app: /basevar:APPLICATIONS /continueOnError:True</action>
+          <defaultVarList>
+            <variable name="BaseVariableName" property="BaseVariableName" hidden="true">COALESCEDAPPS</variable>
+            <variable name="ContinueOnInstallError" property="ContinueOnInstallError" hidden="true">true</variable>
+          </defaultVarList>
+        </step>
+      </group>
+    </sequence>
+  </SequenceData>
+  <SourceDate>2007-10-17T14:58:22</SourceDate>
+  <SupportedOperatingSystems />
+  <IconSize>0</IconSize>
+</SmsTaskSequencePackage>
