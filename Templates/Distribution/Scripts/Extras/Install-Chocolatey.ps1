@@ -66,6 +66,8 @@ write-verbose "Chocolatey Program: $ChocoExe"
 if ( ! (test-path $ChocoExe ) )
 {
     write-verbose "Install Chocolatey..."
+    
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
     Invoke-Expression ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))
     if (!(test-path $ChocoExe))
     {
